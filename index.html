@@ -87,11 +87,13 @@ canvas:focus-visible{outline:2px solid var(--volt);outline-offset:-2px}
         <div><dt>Z</dt><dd>zap</dd></div>
         <div><dt>X</dt><dd>storm, when the meter is full</dd></div>
         <div><dt>P</dt><dd>pause</dd></div>
-        <div><dt>M</dt><dd>sound</dd></div>
+        <div><dt>M</dt><dd>music on/off</dd></div>
+        <div><dt>N</dt><dd>sound effects on/off</dd></div>
       </dl>
-      <div style="display:flex;gap:10px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="s" id="btn-start">START</button>
-        <button class="s" id="btn-sound">SOUND ON</button>
+        <button class="s" id="btn-sound">MUSIC ON</button>
+        <button class="s" id="btn-sfx">EFFECTS ON</button>
       </div>
     </div>
     <details class="guide">
@@ -108,7 +110,7 @@ const W=480,H=270,GY=228,P1=GY-52,P2=GY-102;
 const cv=document.getElementById('game'),g=cv.getContext('2d');
 const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-let muted=store.get('dv_mute','0')==='1';
+let muted=store.get('dv_mute','0')==='1',sfxOff=store.get('dv_sfx','0')==='1';
 /* ---------- modes: one table drives the rules, the select screen and the written guide ---------- */
 const MODES=[
   {id:'easy',name:'EASY',tag:'EASY',sub:'TAKE IT STEADY',col:'#3fbf7f',hi0:10000,lives:5,hp:5,life1:20000,lifeStep:20000,foe:.85,bossHp:.7,pow:1.5,gain:1.5,stormDmg:.3,stun:120,bossCharge:3,bat:50,dropEvery:540,drop:.18,batDrop:.05,inv:140,pitKills:false,keepScore:true,mult:1,
@@ -128,7 +130,7 @@ const PUPS=[
   ['battery','STORM BATTERY','TOPS UP THE STORM METER. BOSSES DROP THEM']
 ];
 const STORM_GUIDE=[['FILL THE STORM METER BY:',1],['FREEING CITIZENS',0],['ZAPPING ENEMIES',0],['HITTING BOSSES WITH YOUR BOLTS',0],['GRABBING STORM BATTERIES',0],['WHEN IT FLASHES, PRESS X (OR STORM):',1],['EVERY ENEMY ON SCREEN IS BLASTED',0],['EVERY ENEMY SHOT IS WIPED OUT',0],['BOSSES ARE STUNNED AND LOSE A BIG',0],['CHUNK OF ENERGY - EVEN THE VAULT',0]];
-const PUP={cell:1,coil:1,bike:1,field:1,watch:1,seeker:1,battery:1};
+const PUP={cell:1,coil:1,bike:1,field:1,watch:1,seeker:1,battery:1,fuse:1};
 const DUR0={power:780,bike:400,field:600,slow:480,seek:720};
 let MODE=MODES.find(m=>m.id===store.get('dv_mode','normal'))||MODES[1],sel=MODES.indexOf(MODE),tapPick=-1,titleT=0;
 const hiKey=m=>m.id==='normal'?'dv_hi':'dv_hi_'+m.id;
@@ -142,6 +144,7 @@ const dur=f=>Math.round(DUR0[f]*MODE.pow);
   MODES.forEach(m=>sec(m.name+' MODE',m.col,m.rules));
   sec('POWER-UPS','#ffc83d',PUPS.map(p=>[p[1],p[2]]));
   sec('THE STORM','#ff3d8b',['FILL THE METER BY FREEING CITIZENS, ZAPPING ENEMIES, HITTING BOSSES AND GRABBING STORM BATTERIES','WHEN IT FLASHES, PRESS X (OR THE STORM BUTTON)','EVERY ENEMY ON SCREEN IS BLASTED AND EVERY ENEMY SHOT IS WIPED OUT','BOSSES ARE STUNNED AND LOSE A BIG CHUNK OF ENERGY - EVEN THE VAULT WITH ITS DOOR SHUT']);
+  sec('SIDE QUESTS','#ffe14a',['EVERY STAGE HAS THREE STARS TO EARN',['LOST FUSE','ONE IS HIDDEN ON EVERY STAGE - HIGH ABOVE THE ROOFTOP PLATFORMS OR HANGING OVER A PIT'],['RESCUE ALL','FREE EVERY CITIZEN ON THE STAGE'],['CHALLENGE','EACH STAGE HAS ITS OWN, SHOWN ON THE STAGE CARD: NO-HIT BOSSES, TIME LIMITS, NO STORM, NO POWER-UPS AND MORE'],'EACH STAR IS WORTH 3,000 POINTS. STARS ARE SAVED IN THE QUEST LOG ON THE TITLE SCREEN','RANKS: ROOKIE, SPARK, LIVE WIRE, HIGH VOLTAGE, DR. VOLT LEGEND','FIND ALL TEN FUSES FOR A SECRET AT THE END']);
 })();
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const hash=n=>{n=Math.imul(n^0x9e3779b9,0x85ebca6b);n^=n>>>13;n=Math.imul(n,0xc2b2ae35);return((n^n>>>16)>>>0)/4294967296};
@@ -227,9 +230,12 @@ function shadow(cx,w,y){g.fillStyle='rgba(0,0,0,.32)';g.beginPath();g.ellipse(Ma
 function pickup(k,x,y){
   x=Math.round(x);y=Math.round(y);
   const pink=k==='bike'||k==='seeker'||k==='battery';
-  const gl=g.createRadialGradient(x+7,y+7,1,x+7,y+7,14);gl.addColorStop(0,pink?'rgba(255,61,139,.4)':'rgba(53,224,255,.45)');gl.addColorStop(1,'rgba(0,0,0,0)');
+  const gl=g.createRadialGradient(x+7,y+7,1,x+7,y+7,14);gl.addColorStop(0,k==='fuse'?'rgba(255,200,61,.6)':pink?'rgba(255,61,139,.4)':'rgba(53,224,255,.45)');gl.addColorStop(1,'rgba(0,0,0,0)');
   g.fillStyle=gl;g.fillRect(x-8,y-8,k==='bike'?44:30,30);
-  if(k==='field'){g.fillStyle='rgba(53,224,255,.3)';g.beginPath();g.arc(x+7,y+7,6.5,0,7);g.fill();g.strokeStyle='#35e0ff';g.lineWidth=1.5;g.stroke();
+  if(k==='fuse'){R(x+2,y+2,10,10,'rgba(200,230,255,.35)');R(x+2,y+2,10,1,'rgba(255,255,255,.7)');R(x-1,y+1,4,12,'#e0a526');R(x+11,y+1,4,12,'#e0a526');R(x-1,y+1,4,2,'#fff0a8');R(x+11,y+1,4,2,'#fff0a8');
+    g.strokeStyle=tick&8?'#fff':'#ffe14a';g.lineWidth=1;g.beginPath();g.moveTo(x+3,y+7);g.lineTo(x+5,y+4);g.lineTo(x+7,y+10);g.lineTo(x+9,y+4);g.lineTo(x+11,y+7);g.stroke();
+    if(tick%40<10){g.fillStyle='#fff';const sx=x+7+((tick/40|0)%3-1)*7;g.fillRect(sx,y-4,1,5);g.fillRect(sx-2,y-2,5,1)}}
+  else if(k==='field'){g.fillStyle='rgba(53,224,255,.3)';g.beginPath();g.arc(x+7,y+7,6.5,0,7);g.fill();g.strokeStyle='#35e0ff';g.lineWidth=1.5;g.stroke();
     g.strokeStyle='#e9ecff';g.lineWidth=1;g.beginPath();for(let i=0;i<6;i++){const a=i*1.047+tick/30;g[i?'lineTo':'moveTo'](x+7+Math.cos(a)*3.4,y+7+Math.sin(a)*3.4)}g.closePath();g.stroke();R(x+3,y+2.5,3,1.5,'#ffffff')}
   else if(k==='watch'){R(x+6,y-1,2,2,'#c7cde6');g.fillStyle='#8a90ad';g.beginPath();g.arc(x+7,y+8,6.4,0,7);g.fill();g.fillStyle='#f3f6ff';g.beginPath();g.arc(x+7,y+8,5,0,7);g.fill();
     g.strokeStyle='#14142a';g.lineWidth=1.2;g.beginPath();g.moveTo(x+7,y+8);g.lineTo(x+7+Math.cos(tick/12)*3.6,y+8+Math.sin(tick/12)*3.6);g.moveTo(x+7,y+8);g.lineTo(x+7,y+5);g.stroke();R(x+6.5,y+7.5,1,1,'#ff3d5a')}
@@ -256,9 +262,9 @@ function themePlay(){
 }
 function setPause(v){paused=v;if(theme){if(v)theme.pause();else if(!muted)themePlay()}}
 document.addEventListener('visibilitychange',()=>{if(theme){if(document.hidden)theme.pause();else if(!muted&&!paused)themePlay()}});
-function audio(){if(muted)return;if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){AC=null}}if(AC&&AC.state==='suspended')AC.resume();themePlay()}
-function beep(f,d,type,v,f2,delay){
-  if(!AC||muted)return;const o=AC.createOscillator(),ga=AC.createGain(),t=AC.currentTime+(delay||0);
+function audio(){if(muted&&sfxOff)return;if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){AC=null}}if(AC&&AC.state==='suspended')AC.resume();if(!muted)themePlay()}
+function beep(f,d,type,v,f2,delay,mus){
+  if(!AC||(mus?muted:sfxOff))return;const o=AC.createOscillator(),ga=AC.createGain(),t=AC.currentTime+(delay||0);
   o.type=type||'square';o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);
   ga.gain.setValueAtTime(v||.05,t);ga.gain.exponentialRampToValueAtTime(.001,t+d);
   o.connect(ga);ga.connect(AC.destination);o.start(t);o.stop(t+d+.02);
@@ -274,7 +280,7 @@ const LEAD=[440,0,523,659,0,523,440,0,392,0,494,587,0,494,392,0,440,0,523,659,0,
 function music(){
   if(!AC||muted||themeOn())return;const sp=bossOn?5:7;if(tick%sp)return;const i=(tick/sp)|0;
   const tr=STAGES[stage].tr*(bossOn?1.189:1),b=BASS[i%16],l=LEAD[i%32];
-  if(b)beep(b*tr,.11,'triangle',.07);if(l)beep(l*tr,.09,'square',.016);
+  if(b)beep(b*tr,.11,'triangle',.07,0,0,1);if(l)beep(l*tr,.09,'square',.016,0,0,1);
 }
 
 /* ---------- input ---------- */
@@ -288,6 +294,7 @@ addEventListener('keydown',e=>{
   if(k){e.preventDefault();if(!e.repeat){audio();press(k)}return}
   if(e.code==='KeyP'&&state==='play'){setPause(!paused)}
   if(e.code==='KeyM')toggleSound();
+  if(e.code==='KeyN')toggleSfx();
 });
 addEventListener('keyup',e=>{const k=MAP[e.code];if(k)release(k)});
 addEventListener('blur',()=>{for(const k in K)K[k]=0});
@@ -305,9 +312,13 @@ cv.addEventListener('pointerdown',ev=>{cv.focus();audio();
   if(state!=='play')JP.start=1});
 document.getElementById('btn-start').addEventListener('click',()=>{audio();if(state==='play')setPause(!paused);else JP.start=1});
 const sndBtn=document.getElementById('btn-sound');
-function toggleSound(){muted=!muted;store.set('dv_mute',muted?'1':'0');sndBtn.textContent=muted?'SOUND OFF':'SOUND ON';if(!muted)audio();else if(theme)theme.pause()}
-sndBtn.textContent=muted?'SOUND OFF':'SOUND ON';
+const sfxBtn=document.getElementById('btn-sfx');
+function toggleSound(){muted=!muted;store.set('dv_mute',muted?'1':'0');sndBtn.textContent=muted?'MUSIC OFF':'MUSIC ON';if(!muted)audio();else if(theme)theme.pause()}
+function toggleSfx(){sfxOff=!sfxOff;store.set('dv_sfx',sfxOff?'1':'0');sfxBtn.textContent=sfxOff?'EFFECTS OFF':'EFFECTS ON';if(!sfxOff)audio()}
+sndBtn.textContent=muted?'MUSIC OFF':'MUSIC ON';
+sfxBtn.textContent=sfxOff?'EFFECTS OFF':'EFFECTS ON';
 sndBtn.addEventListener('click',toggleSound);
+sfxBtn.addEventListener('click',toggleSfx);
 
 /* ---------- world ---------- */
 const STAGES=[
@@ -322,6 +333,24 @@ const STAGES=[
   {name:'THE MIRROR HALL',card:['A HALL OF GOLD MIRRORS.','ONE REFLECTION IS NOT YOURS.'],sky:['#0e0a04','#2e2208','#6a4a12'],far:'#2a1e08',mid:'#34260a',near:'#3e2e0c',win:'#fff0a8',gtop:'#e0b84a',gmid:'#8f6a1c',gfill:'#3a2a0c',pit:'#05050c',boss:'GOLD VOLT',th:9,bk:'mirror',gap:.7,sp:106,types:['hopper','tosser','goon','roller','drone','hopper','tosser'],tr:.944,df:.6,len:5600},
   {name:'MIDAS TOWER',card:['THE ROOF OF THE CITY.','HE IS WAITING AT THE TOP.','EVERY VILLAIN WAS A FRIEND.'],sky:['#04050d','#121c3a','#2a3f6e'],far:'#0e1430',mid:'#131b40',near:'#1a2656',win:'#35e0ff',gtop:'#7a8aac',gmid:'#3a4666',gfill:'#141a30',pit:'#05050c',boss:'THE GOLDEN BOY',th:2,bk:'gold',gap:.7,sp:104,types:['drone','tosser','hopper','goon','roller','drone','tosser','hopper'],tr:.891,df:.7,len:5800}
 ];
+/* ---------- side quests: three stars per stage (fuse, rescue all, the stage's own challenge) ---------- */
+const QCH=['nohit','speed','nostorm','zap','nopow','nohit','speed','nofall','nostorm','nodie'];
+const QNAME={nohit:['UNTOUCHABLE','BEAT THE BOSS WITHOUT LOSING A CELL'],speed:['AGAINST THE CLOCK','CLEAR THE STAGE IN UNDER '],nostorm:['NO STORM','CLEAR THE STAGE WITHOUT USING THE STORM'],
+  zap:['GOON HUNTER','ZAP '],nopow:['BARE HANDS','NO POWER-UPS (CELLS AND BATTERIES ARE OK)'],nofall:['SURE FOOTED','NEVER FALL INTO A PIT'],nodie:['ONE LIFE','CLEAR THE STAGE WITHOUT LOSING A LIFE']};
+const ZAPN=14,mmss=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+const QLIM={1:100,6:140},qLimit=si=>QLIM[si]||Math.round((STAGES[si].len/2.2*1.6/60+60)/5)*5;
+const qText=si=>{const c=QCH[si],n=QNAME[c];return[n[0],c==='speed'?n[1]+mmss(qLimit(si)):c==='zap'?n[1]+ZAPN+' ENEMIES':n[1]]};
+const QLOG=(store.get('dv_quests','')||'').split(',').map(v=>(+v||0)&7);while(QLOG.length<STAGES.length)QLOG.push(0);QLOG.length=STAGES.length;
+const bitsN=b=>(b&1)+(b>>1&1)+(b>>2&1),stars=()=>QLOG.reduce((a,b)=>a+bitsN(b),0),fuses=()=>QLOG.filter(b=>b&1).length;
+const RANKS=[[30,'DR. VOLT LEGEND'],[20,'HIGH VOLTAGE'],[12,'LIVE WIRE'],[5,'SPARK'],[0,'ROOKIE']],rank=()=>RANKS.find(r=>stars()>=r[0])[1];
+let Q={fuse:0,fail:0,kills:0,t:0,res:0,fresh:0};
+const qIs=c=>QCH[stage]===c;
+function qFail(){if(Q.fail||state!=='play')return;Q.fail=1;pop(camX+W/2-64,64,'CHALLENGE FAILED',C.hot);beep(200,.25,'square',.04,90)}
+function qFinish(){const c=QCH[stage];let b=0;if(Q.fuse)b|=1;if(citFreed>=citN)b|=2;
+  if(!Q.fail&&(c!=='zap'||Q.kills>=ZAPN)&&(c!=='speed'||Q.t<=qLimit(stage)*60))b|=4;
+  Q.res=b;Q.fresh=b&~QLOG[stage];QLOG[stage]|=b;store.set('dv_quests',QLOG.join(','));if(b)add(bitsN(b)*3000)}
+function qStar(x,y,on,j){const col=on?[C.gold,C.volt,C.hot][j]:'#3a3660',pts=[];
+  for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i&1?2.6:6;pts.push(x+Math.cos(a)*r,y+Math.sin(a)*r)}poly(col,pts)}
 let state='title',stage=0,score=0,lives=3,nextLife=30000,tick=0,camX=0,shake=0,flashT=0,paused=false;
 let L=0,arenaX=1e9,solids=[{x:-1e6,y:GY,w:2e6,h:60}],plats=[],ens=[],bolts=[],ebul=[],parts=[],pops=[],stormHits=[];
 let windV=0,boss=null,bossOn=false,bossDie=0,warnT=0,cardT=0,clearT=0,overT=0,endT=0,citN=0,citFreed=0,citAll=0,freedAll=0,bonus=0,foeAcc=0,dropT=0,dropN=0;
@@ -367,6 +396,13 @@ function build(si){
   citN=0;
   for(let x=470;x<arenaX-130;x+=400+Math.floor(r()*200)){while(!onG(x))x+=30;ens.push(mkE('cit',x,GY-30));citN++}
   plats.filter(p=>p.y===P2).forEach(p=>{ens.push(mkE('cit',p.x+p.w/2-6,p.y-30));citN++});
+  /* the lost fuse: odd stages hang it over the widest pit, even stages float it above the last high platform */
+  {let fx=-1,fy=0;
+    if(si%2){const gs=gaps.filter(([a])=>a<arenaX-260);if(gs.length){const[a,w]=gs.reduce((m,q)=>q[1]>m[1]?q:m);fx=a+w/2-7;fy=GY-110}}
+    if(fx<0){let hp=plats.filter(p=>p.y===P2&&!p.arena).pop();
+      if(!hp){const lo=plats.filter(p=>p.y===P1&&!p.arena),b=lo[lo.length>>1];if(b){hp={x:b.x+20,y:P2,w:56,h:8};plats.push(hp)}}
+      if(hp){fx=hp.x+hp.w/2-7;fy=P2-90}}
+    if(fx>=0)ens.push(mkE('fuse',fx,fy))}
   const gnd=x=>{while(!onG(x))x+=30;return x};
   ens.push(mkE('coil',gnd(L*.28),GY-18),mkE('field',gnd(L*.44),GY-18),mkE('bike',gnd(L*.6),GY-18),mkE(si%2?'watch':'seeker',gnd(L*.76),GY-18),mkE('cell',arenaX-80,GY-18));
   const freeP=plats.filter(p=>p.y===P1&&!p.used&&!p.arena),cellEvery=MODE.id==='corey'?6:3;
@@ -376,7 +412,7 @@ function build(si){
 function setMode(m){MODE=m;sel=MODES.indexOf(m);hi=HI[m.id];store.set('dv_mode',m.id)}
 function newGame(){score=0;lives=MODE.lives;nextLife=MODE.life1;stage=0;citAll=0;freedAll=0;P.storm=0;startStage()}
 function startStage(){
-  build(stage);boss=null;bossOn=false;bossDie=0;warnT=0;camX=0;shake=0;flashT=0;foeAcc=0;dropT=0;dropN=0;
+  build(stage);Q={fuse:0,fail:0,kills:0,t:0,res:0,fresh:0};boss=null;bossOn=false;bossDie=0;warnT=0;camX=0;shake=0;flashT=0;foeAcc=0;dropT=0;dropN=0;
   Object.assign(P,{x:50,y:GY-40,vx:0,vy:0,face:1,ground:true,hp:MODE.hp,inv:0,cool:0,power:0,bike:0,field:0,slow:0,seek:0,dead:0});
   safe={x:50,y:GY-40};state='card';cardT=0;
 }
@@ -391,10 +427,10 @@ function wave(x,vx){ebul.push({k:'wave',x:x-6,y:GY-12,vx,vy:0,g:0,w:12,h:12,life
 const charge=n=>{P.storm=Math.min(100,P.storm+n)};
 function hurt(){
   if(P.inv>0||P.bike>0||P.field>0||P.dead>0||state!=='play')return;
-  P.hp--;P.inv=MODE.inv;P.vy=-4;SFX.hurt();shake=6;burst(P.x+8,P.y+20,C.volt,10);
+  P.hp--;P.inv=MODE.inv;P.vy=-4;SFX.hurt();if(bossOn&&qIs('nohit'))qFail();shake=6;burst(P.x+8,P.y+20,C.volt,10);
   if(P.hp<=0)die();
 }
-function die(){P.dead=80;P.hp=0;P.power=P.bike=P.field=P.slow=P.seek=0;if(MODE.id==='corey')P.storm=0;burst(P.x+8,Math.min(P.y,GY)+20,C.bolt,28);SFX.boom()}
+function die(){if(qIs('nodie')||(bossOn&&qIs('nohit')))qFail();P.dead=80;P.hp=0;P.power=P.bike=P.field=P.slow=P.seek=0;if(MODE.id==='corey')P.storm=0;burst(P.x+8,Math.min(P.y,GY)+20,C.bolt,28);SFX.boom()}
 function free(e){e.freed=true;e.vy=-4.5;citFreed++;freedAll++;add(500);pop(e.x-22,e.y-10,'THANKS!',C.volt);SFX.free();charge(12*MODE.gain);burst(e.x+6,e.y+12,C.gold,14)}
 function dmg(e,n,pierce){
   if(e.dead||bossDie>0)return;
@@ -402,12 +438,12 @@ function dmg(e,n,pierce){
   e.hp-=n;e.flash=5;SFX.hit();
   if(e.hp>0)return;
   if(e.boss){e.hp=0;bossDie=e.k==='gold'?170:110;ebul.length=0;add(e.pts);SFX.boom();if(e.k==='gold'){e.st='down'}}
-  else{e.dead=true;add(e.pts);pop(e.x,e.y-8,''+e.pts*MODE.mult,C.bolt);burst(e.x+e.w/2,e.y+e.h/2,C.gold,16);SFX.boom();charge(7*MODE.gain);
+  else{e.dead=true;Q.kills++;add(e.pts);pop(e.x,e.y-8,''+e.pts*MODE.mult,C.bolt);burst(e.x+e.w/2,e.y+e.h/2,C.gold,16);SFX.boom();charge(7*MODE.gain);
     const r=Math.random(),dy=Math.min(e.y,GY-18);
     if(r<MODE.drop)ens.push(mkE('cell',e.x+3,dy));else if(r<MODE.drop+MODE.batDrop)ens.push(mkE('battery',e.x+3,dy))}
 }
 function storm(){
-  P.storm=0;flashT=24;shake=10;SFX.storm();stormHits=[];ebul.length=0;
+  if(qIs('nostorm'))qFail();P.storm=0;flashT=24;shake=10;SFX.storm();stormHits=[];ebul.length=0;
   for(const e of ens.slice()){const sx=e.x-camX;if(sx<-20||sx>W+20||e.dead)continue;
     if(e.k==='cit'){if(!e.freed){stormHits.push({x:e.x+6,y:e.y});free(e)}}
     else if(e.boss){if(bossDie>0)continue;stormHits.push({x:e.x+e.w/2,y:e.y});
@@ -461,7 +497,7 @@ function updPlayer(){
       if(p.x+p.w>q.x&&p.x<q.x+q.w&&pb<=q.y+.01&&p.y+p.h>=q.y){p.y=q.y-p.h;p.vy=0;p.ground=true;
         if(i<solids.length&&p.x>q.x+10&&p.x+p.w<q.x+q.w-10)safe={x:p.x,y:p.y}}}
   }
-  if(p.y>H+30){SFX.hurt();if(MODE.pitKills){pop(camX+W/2-56,H-40,'NO MERCY!',C.hot);die()}else{p.hp--;if(p.hp<=0){die()}else{p.x=Math.max(safe.x,camX+4);p.y=safe.y;p.vy=0;p.inv=100}}}
+  if(p.y>H+30){SFX.hurt();if(qIs('nofall'))qFail();if(MODE.pitKills){pop(camX+W/2-56,H-40,'NO MERCY!',C.hot);die()}else{p.hp--;if(p.hp<=0){die()}else{p.x=Math.max(safe.x,camX+4);p.y=safe.y;p.vy=0;p.inv=100}}}
   if(K.fire&&p.cool<=0){
     const bx=p.face>0?p.x+p.w+2:p.x-16,by=p.y+14,sk=p.seek>0;
     bolts.push({x:bx,y:by,vx:p.face*7,vy:0,w:14,h:4,life:70,seek:sk});
@@ -620,9 +656,10 @@ function update(){
   if(state==='over'){overT--;
     if(MODE.id==='corey'){if(overT<420&&(JP.start||JP.jump||JP.fire)){saveHi();newGame()}else if(overT<=0)toTitle();return}
     if(JP.start||JP.jump||JP.fire){if(!MODE.keepScore)score=0;lives=MODE.lives;if(!MODE.keepScore||nextLife<score)nextLife=score+MODE.life1;citAll-=citN;freedAll-=citFreed;startStage()}else if(overT<=0)toTitle();return}
-  if(state==='clear'){clearT++;if(clearT>260||(clearT>60&&JP.start)){stage++;startStage()}return}
-  if(state==='ending'){endT++;if(endT>420&&(JP.start||JP.jump||JP.fire))toTitle();return}
+  if(state==='clear'){clearT++;if(clearT>360||(clearT>60&&JP.start)){stage++;startStage()}return}
+  if(state==='ending'){endT++;if(endT>40+(fuses()===10?6:5)*90&&(JP.start||JP.jump||JP.fire))toTitle();return}
   music();
+  Q.t++;if(qIs('speed')&&Q.t===qLimit(stage)*60+1)qFail();
   windV=0;if(STAGES[stage].wind){const c=tick%520;if(c<150)windV=(((tick/520)|0)&1?1:-1)*.55*Math.min(1,c/20,(150-c)/20)}
   updPlayer();
   if(!bossOn){camX=Math.max(camX,Math.min(P.x-W*.38,arenaX));if(camX>=arenaX)spawnBoss()}
@@ -639,7 +676,9 @@ function update(){
       if(e.life&&--e.life<=0){e.dead=true;continue}
       if(P.dead>0)continue;
       if(overlap(P,{x:e.x,y:e.y-3,w:e.w,h:e.h+6})){e.dead=true;SFX.get();add(200);const px=e.x,py=e.y-10;
-        if(e.k==='cell'){P.hp=Math.min(MODE.hp,P.hp+1);pop(px-16,py,'CHARGE',C.volt)}
+        if(qIs('nopow')&&/^(coil|bike|field|watch|seeker)$/.test(e.k))qFail();
+        if(e.k==='fuse'){Q.fuse=1;SFX.free();burst(e.x+7,e.y+7,C.gold,24);pop(px-36,py,'LOST FUSE!',C.gold)}
+        else if(e.k==='cell'){P.hp=Math.min(MODE.hp,P.hp+1);pop(px-16,py,'CHARGE',C.volt)}
         else if(e.k==='coil'){P.power=dur('power');pop(px-60,py,'BISCUIT-TIN COIL!',C.bolt)}
         else if(e.k==='bike'){P.bike=dur('bike');pop(px-40,py,'THE OLD BIKE!',C.hot)}
         else if(e.k==='field'){P.field=dur('field');pop(px-40,py,'FORCE FIELD!',C.volt)}
@@ -689,7 +728,7 @@ function update(){
     if(boss.k==='gold'){boss.y=Math.min(GY-boss.h,boss.y+2);if(bossDie%4===0)parts.push({x:boss.x+Math.random()*24,y:boss.y+Math.random()*50,vx:(Math.random()-.5),vy:-1.8,life:34,col:C.gold})}
     else if(bossDie%7===0){burst(boss.x+Math.random()*boss.w,boss.y+Math.random()*boss.h,bossDie%2?C.gold:C.hot,12);SFX.boom();shake=4}
     if(bossDie===0){
-      bonus=P.hp*1000;add(bonus);saveHi();
+      bonus=P.hp*1000;add(bonus);qFinish();saveHi();
       if(boss.k==='gold'){state='ending';endT=0}else{boss.dead=true;ens=ens.filter(e=>!e.dead);state='clear';clearT=0;SFX.start()}
     }
   }
@@ -951,7 +990,7 @@ function drawE(e){
       else{shadow(x+6,6,e.gy+30);hero(x,e.y,(e.id&1)?1:-1,.75,STAT,{});
         if((tick+e.id)%50<8){g.fillStyle='#fff';const sx=x+2+e.id%8,sy=e.y+4+(e.id%3)*7;g.fillRect(sx,sy-2,1,5);g.fillRect(sx-2,sy,5,1)}}
       break;
-    case'cell':case'coil':case'bike':case'field':case'watch':case'seeker':case'battery':if(e.life&&e.life<120&&tick&4)break;pickup(e.k,x,e.by+Math.sin(tick/10)*2.5);break;
+    case'fuse':case'cell':case'coil':case'bike':case'field':case'watch':case'seeker':case'battery':if(e.life&&e.life<120&&tick&4)break;pickup(e.k,x,e.by+Math.sin(tick/10)*2.5);break;
     case'brute':if(bossDie===0||tick&2){if(e.ground)shadow(x+19,18);goon(x,e.y,e.face,1.9,BRUTEP,e.ground&&e.rest===0?e.t:0,{spikes:true,still:!e.ground||e.rest>0})}break;
     case'search':{
       const bx=Math.round(x+e.w/2);
@@ -994,6 +1033,10 @@ function drawHUD(){
   let ix=6;for(const[f,k,w]of[['power','coil',14],['bike','bike',26],['field','field',14],['slow','watch',14],['seek','seeker',14]]){const v=P[f];if(v<=0)continue;
     if(v>120||tick&8)pickup(k,ix,36);g.fillStyle='#0a0818';g.fillRect(ix,54,w,4);g.fillStyle=v<120?C.hot:C.volt;g.fillRect(ix+1,55,Math.max(1,(w-2)*v/dur(f)),2);ix+=w+10}
   if(Math.abs(windV)>.2&&tick&8)otxt(windV<0?'<< GUST':'GUST >>',W/2,40,C.ink,8,'center');
+  {const c=QCH[stage];let qs=QNAME[c][0],qc=C.dim;
+    if(c==='speed')qs='CLOCK '+mmss(Math.max(0,Math.ceil((qLimit(stage)*60-Q.t)/60)));else if(c==='zap')qs='ZAPPED '+Math.min(Q.kills,ZAPN)+'/'+ZAPN;
+    if(Q.fail){qs=QNAME[c][0]+' FAILED';qc=C.hot}else if(c==='zap'&&Q.kills>=ZAPN)qc=C.volt;else if(c==='speed'&&qLimit(stage)*60-Q.t<1200&&tick&8)qc=C.bolt;
+    otxt(qs,W-6,34,qc,8,'right');if(Q.fuse)otxt('FUSE FOUND',W-6,46,C.gold,8,'right')}
   if(boss&&bossOn){
     if(warnT>0){if(tick&8)otxt('WARNING',W/2,96,C.hot,24,'center');otxt(STAGES[stage].boss,W/2,130,C.gold,8,'center')}
     otxt(STAGES[stage].boss,8,H-14,C.gold);g.fillStyle='#0a0818';g.fillRect(189,H-15,W-196,10);g.fillStyle='#2a2a4a';g.fillRect(190,H-14,W-198,8);
@@ -1003,7 +1046,11 @@ function drawHUD(){
 function shade(a){g.fillStyle='rgba(5,4,14,'+a+')';g.fillRect(0,0,W,H)}
 function drawGuide(pg){
   shade(.86);
-  if(pg===1){otxt('POWER-UPS',W/2,12,C.bolt,16,'center');
+  if(pg===3){otxt('QUEST LOG',W/2,10,C.gold,16,'center');
+    STAGES.forEach((S,i)=>{const y=34+i*17,b=QLOG[i];otxt((i<9?' ':'')+(i+1)+' '+S.name,14,y,b===7?C.bolt:C.ink);
+      for(let j=0;j<3;j++)qStar(200+j*15,y+3,b>>j&1,j);otxt(QNAME[QCH[i]][0],250,y,b&4?C.hot:C.dim)});
+    otxt('STARS '+stars()+'/30   FUSES '+fuses()+'/10',W/2,208,C.ink,8,'center');otxt('RANK: '+rank(),W/2,222,C.bolt,8,'center')}
+  else if(pg===1){otxt('POWER-UPS',W/2,12,C.bolt,16,'center');
     PUPS.forEach((p,i)=>{const y=38+i*29;pickup(p[0],p[0]==='bike'?16:22,y+2);otxt(p[1],56,y,C.gold);otxt(p[2],56,y+11,C.ink)})}
   else{otxt('THE STORM',W/2,12,C.hot,16,'center');
     let y=40;STORM_GUIDE.forEach(l=>{if(l[1]){y+=l[0].startsWith('WHEN')?8:0;otxt(l[0],40,y,C.gold)}else{g.fillStyle=C.hot;g.fillRect(48,y+2,4,4);otxt(l[0],60,y,C.ink)}y+=15});
@@ -1025,7 +1072,7 @@ function drawSelect(){
   if(tick%60<40)otxt('< > CHOOSE    START / Z TO PLAY',W/2,H-14,C.dim,8,'center');
 }
 function drawTitle(){
-  const pg=((titleT/420)|0)%3;if(pg){drawGuide(pg);return}
+  const pg=((titleT/420)|0)%4;if(pg){drawGuide(pg);return}
   shade(.4);
   txt('DR. VOLT',W/2+3,33,C.hot,40,'center');txt('DR. VOLT',W/2,30,C.bolt,40,'center');
   otxt('& THE GOLDEN BOY',W/2,80,C.gold,8,'center');
@@ -1035,12 +1082,16 @@ function drawTitle(){
   for(let i=1;i<=9;i++)g.lineTo(150+i*17,GY-64+((i&1)?z:-z));g.stroke();g.strokeStyle=C.bolt;g.lineWidth=2.5;g.stroke();g.strokeStyle='#fff';g.lineWidth=1;g.stroke();
   if(tick%60<40)otxt('PRESS START',W/2,104,C.ink,8,'center');
   otxt('HI '+pad6(hi),W/2,120,C.volt,8,'center');
+  otxt(rank()+'  '+stars()+'/30',W/2,136,C.gold,8,'center');
   otxt('SAVE THE CITY BEFORE IT ALL TURNS TO GOLD',W/2,H-18,C.ink,8,'center');
 }
 function drawCard(){
   const S=STAGES[stage];g.fillStyle='#05040e';g.fillRect(0,0,W,H);
   txt(MODE.name+' MODE',W/2,32,MODE.col,8,'center');txt('STAGE '+(stage+1),W/2,50,C.dim,8,'center');txt(S.name,W/2+2,72,C.hot,24,'center');txt(S.name,W/2,70,C.bolt,24,'center');
-  S.card.forEach((l,i)=>{if(cardT>30+i*30)txt(l,W/2,122+i*18,i===S.card.length-1?C.gold:C.ink,8,'center')});
+  S.card.forEach((l,i)=>{if(cardT>30+i*30)txt(l,W/2,112+i*16,i===S.card.length-1?C.gold:C.ink,8,'center')});
+  if(cardT>20){const qt=qText(stage),b=QLOG[stage];
+    ['LOST FUSE','RESCUE ALL',qt[0]].forEach((l,j)=>{const x=[96,212,320][j];qStar(x,173,b>>j&1,j);txt(l,x+10,169,b>>j&1?C.ink:C.dim)});
+    txt(qt[1],W/2,184,'#b9b4e0',8,'center')}
   g.fillStyle='#22244a';g.fillRect(0,236,W,2);
   hero(clamp(cardT*2.6-30,-30,W/2-8),196,1,1,VOLT,{run:cardT*2.6-30<W/2-8,ph:tick*.36});
 }
@@ -1053,9 +1104,11 @@ function drawEnding(){
   g.fillStyle='#141a30';g.fillRect(0,GY,W,H-GY);g.fillStyle='#3a4666';g.fillRect(0,GY,W,9);g.fillStyle='#7a8aac';g.fillRect(0,GY,W,3);
   shadow(W/2-30,14);shadow(W/2+30,14);
   hero(W/2-44,GY-64,1,1.6,VOLT,{});hero(W/2+18,GY-64,-1,1.6,CHASE,{});
-  const lines=[['THE GOLD FADES. THE CITY WAKES.',C.ink],['UNDER THE GOLD THERE WAS ONLY CHASE.',C.ink],['EVERY VILLAIN WAS A FRIEND.',C.bolt],['CITIZENS FREED '+freedAll+'/'+citAll+'   SCORE '+pad6(score),C.volt],MODE.id==='corey'?['COREY MODE BEATEN. ABSOLUTE LEGEND.',C.hot]:['NOW TRY '+(MODE.id==='easy'?'NORMAL':'COREY')+' MODE...',MODE.id==='easy'?'#35e0ff':'#ff3d5a']];
+  const lines=[['THE GOLD FADES. THE CITY WAKES.',C.ink],['UNDER THE GOLD THERE WAS ONLY CHASE.',C.ink],['EVERY VILLAIN WAS A FRIEND.',C.bolt],['CITIZENS FREED '+freedAll+'/'+citAll+'   SCORE '+pad6(score),C.volt],MODE.id==='corey'?['COREY MODE BEATEN. ABSOLUTE LEGEND.',C.hot]:['NOW TRY '+(MODE.id==='easy'?'NORMAL':'COREY')+' MODE...',MODE.id==='easy'?'#35e0ff':'#ff3d5a'],['SIDE QUESTS '+stars()+'/30 STARS - '+rank(),C.gold]];
+  if(fuses()===10)lines.push(['ALL TEN FUSES FOUND. THE CITY LIGHTS COME ON.',C.volt]);
   lines.forEach((l,i)=>{if(endT>40+i*90)otxt(l[0],W/2,22+i*18,l[1],8,'center')});
-  if(endT>420&&tick%60<40)otxt('THANK YOU FOR PLAYING - PRESS START',W/2,H-16,C.ink,8,'center');
+  if(fuses()===10&&endT>40+6*90){g.fillStyle='rgba(255,225,74,'+(.5+.4*Math.sin(tick/9))+')';for(let i=0;i<40;i++)g.fillRect((hash(i+900)*W)|0,(140+hash(i+950)*(GY-150))|0,3,4)}
+  if(endT>40+(lines.length-1)*90&&tick%60<40)otxt('THANK YOU FOR PLAYING - PRESS START',W/2,H-16,C.ink,8,'center');
 }
 function render(){
   g.save();
@@ -1068,10 +1121,13 @@ function render(){
     if(state==='title')drawTitle();
     else{
       drawHUD();
-      if(state==='clear'){shade(.55);txt('STAGE CLEAR',W/2,76,C.bolt,24,'center');
-        if(clearT>40)txt('CITIZENS FREED  '+citFreed+'/'+citN,W/2,126,C.ink,8,'center');
-        if(clearT>80)txt('CHARGE BONUS  '+bonus*MODE.mult,W/2,144,C.volt,8,'center');
-        if(clearT>120)txt('NEXT: '+STAGES[stage+1].name,W/2,172,C.gold,8,'center')}
+      if(state==='clear'){shade(.62);txt('STAGE CLEAR',W/2,52,C.bolt,24,'center');
+        if(clearT>30)txt('CITIZENS FREED  '+citFreed+'/'+citN,W/2,90,C.ink,8,'center');
+        if(clearT>55)txt('CHARGE BONUS  '+bonus*MODE.mult,W/2,104,C.volt,8,'center');
+        if(clearT>80)txt('SIDE QUESTS',W/2,126,C.gold,8,'center');
+        ['LOST FUSE','RESCUE ALL',QNAME[QCH[stage]][0]].forEach((l,j)=>{if(clearT<=100+j*25)return;const y=142+j*15,on=Q.res>>j&1;
+          qStar(110,y+3,on,j);txt(l,124,y,on?C.ink:C.dim);txt(Q.fresh>>j&1?'NEW! +'+3000*MODE.mult:on?'+'+3000*MODE.mult:'MISSED',W-110,y,Q.fresh>>j&1?C.bolt:on?C.volt:'#6a6690',8,'right')});
+        if(clearT>190)txt('NEXT: '+STAGES[stage+1].name,W/2,200,C.gold,8,'center')}
       if(state==='over'){
         if(MODE.id==='corey'){shade(.75);txt('GAME OVER',W/2,60,C.hot,24,'center');txt('COREY MODE SHOWS NO MERCY',W/2,104,C.ink,8,'center');txt('BACK TO STAGE 1: VOLT STREET',W/2,122,C.gold,8,'center');
           txt('YOU REACHED STAGE '+(stage+1)+'   SCORE '+pad6(score),W/2,140,C.volt,8,'center');if(overT<420&&tick%60<40)txt('PRESS START TO GO AGAIN',W/2,172,C.bolt,8,'center')}
@@ -1096,7 +1152,8 @@ window.DV={
   get state(){return state},set state(v){state=v},
   storm,MODES,get boss(){return boss},get ebul(){return ebul},get overT(){return overT},set overT(v){overT=v},
   spawnAt(k,x,y){const e=mkE(k,x,y);ens.push(e);return e},
-  get ens(){return ens},
+  get ens(){return ens},get Q(){return Q},QLOG,qText,qLimit,get plats(){return plats},
+  qReset(){QLOG.fill(0);store.set('dv_quests','')},
   info(){return{state,stage,score,lives,hp:P.hp,x:Math.round(P.x),y:Math.round(P.y),cam:Math.round(camX),ens:ens.length,boss:boss?boss.hp:null,bossOn,storm:P.storm,L,arenaX,mode:MODE.id,field:P.field,slow:P.slow,seek:P.seek,power:P.power,bossMax:boss?boss.max:null,stun:boss?boss.stun:0}},
   P,K,press,release
 };
