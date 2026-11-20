@@ -200,8 +200,7 @@ function hero(x,y,face,sc,pal,o){
 /* ---------- secret: Dr. X-Pert (bald, big beard, glasses, turbo hover-chair). Same 16x40 box as the hero. ---------- */
 const XPP={skin:SKIN,skinD:SKIND,beard:'#6a4a32',beardD:'#4a3020',suit:'#2b2f6b',suitD:'#1d2050',shirt:'#f3f6ff',em:'#ffc83d',glass:'#bfe8ff',frame:'#14142a',
   chair:'#3a3f5c',chairD:'#23263f',cush:'#7a3cff',glow:'#35e0ff',trim:'#ff3d8b',arm:'#8a90ad'};
-const XPG={skin:'#ffd766',skinD:'#c98a1c',beard:'#e0a526',beardD:'#a06c12',suit:'#e0a526',suitD:'#a06c12',shirt:'#fff0a8',em:'#ff3d5a',glass:'#fff6d0',frame:'#8f5d12',
-  chair:'#c98a1c',chairD:'#8f5d12',cush:'#ffe14a',glow:'#fff0a8',trim:'#ff3d5a',arm:'#ffd766'};
+const XPG={skin:'#3e3260',skinD:'#251d3c',beard:'#1c1530',beardD:'#0e0a1a',suit:'#2a1f46',suitD:'#1c1530',shirt:'#5e4c8a',em:'#c77dff',glass:'#c77dff',frame:'#08060f',chair:'#1c1530',chairD:'#0e0a1a',cush:'#5e4c8a',glow:'#c77dff',trim:'#c77dff',arm:'#3e3260'};
 function xpert(x,y,face,sc,pal,o){
   o=o||{};g.save();g.translate(Math.round(x)+(face<0?16*sc:0),Math.round(y));g.scale(face*sc,sc);
   const hov=Math.sin(tick/9)*.8+(o.air?-1:0),spin=(o.ph||tick*.2)*(o.run?1:.15);
@@ -256,7 +255,7 @@ function setXP(v){XP=v;store.set('dv_xp',v?'1':'0');secretT=200;const h=document
 function drawSecret(){g.fillStyle='rgba(5,4,14,.7)';g.fillRect(0,96,W,62);
   txt(XP?'SECRET UNLOCKED':'SECRET OFF',W/2,106,tick&8?C.hot:C.bolt,8,'center');txt(XP?'DR. X-PERT':'DR. VOLT IS BACK',W/2,122,C.bolt,16,'center');
   txt('TYPE THE CODE AGAIN TO SWITCH BACK',W/2,144,C.dim,8,'center')}
-const bname=()=>XP&&STAGES[stage].bk==='mirror'?'GOLD X-PERT':STAGES[stage].boss;
+const bname=()=>XP&&STAGES[stage].bk==='mirror'?'SHADOW X-PERT':STAGES[stage].boss;
 function me(x,y,face,sc,o){if(XP)xpert(x,y,face,sc,XPP,o);else hero(x,y,face,sc,VOLT,o)}
 const GOONP={l:'#ffe9a0',m:'#ffc83d',d:'#b8791a',boot:'#5e3d0c',eye:'#ff3d5a'};
 const TOSSP={l:'#b79cff',m:'#7a4cff',d:'#4c2bb8',boot:'#24124f',eye:'#ffe14a'};
@@ -406,7 +405,7 @@ const STAGES=[
   {name:'HARBOUR LIGHTS',card:['DOWN AT THE DOCKS THE CRANES ARE LIVE.','THE TIDE IS TURNING.'],sky:['#06101e','#14304a','#c2704a'],far:'#0e1c2c',mid:'#122436',near:'#162c40',win:'#ffd27a',gtop:'#8a7a66',gmid:'#4a4038',gfill:'#241e1c',pit:'#061826',boss:'WRECKING CRANE',th:6,bk:'crane',gap:.65,sp:122,types:['goon','hopper','drone','roller','goon','tosser'],tr:1,df:.15,len:5300},
   {name:'THE POWER STATION',card:["WHERE THE CITY'S POWER IS MADE.",'KEEP YOUR HEAD DOWN.'],sky:['#120806','#3a1a10','#8a3a14'],far:'#24140e',mid:'#2e1a12',near:'#3a2014',win:'#ffb020',gtop:'#a08060',gmid:'#5a4434',gfill:'#2a1c16',pit:'#ffb020',boss:'THE POWER PRESS',th:7,bk:'press',gap:.7,sp:116,types:['roller','goon','hopper','tosser','drone','roller'],tr:1.122,df:.3,len:5400},
   {name:'THE SKYWAY',card:['ACROSS THE ROOFTOPS.','HOLD ON TO YOUR GOGGLES.','THE WIND IS UP.'],sky:['#0a1a40','#2a4a8a','#7aa0d0'],far:'#1a2a5a',mid:'#203466',near:'#283e72',win:'#ffe9a0',gtop:'#9a8a88',gmid:'#5a4a4e',gfill:'#2a2228',pit:'#03040c',boss:'STORM ZEPPELIN',th:8,bk:'blimp',gap:.85,sp:112,types:['drone','hopper','goon','tosser','drone','roller'],tr:1.189,df:.45,wind:1,len:5500},
-  {name:'THE MIRROR HALL',card:['A HALL OF GOLDEN MIRRORS.','ONE REFLECTION IS NOT YOURS.'],sky:['#0e0a04','#2e2208','#6a4a12'],far:'#2a1e08',mid:'#34260a',near:'#3e2e0c',win:'#fff0a8',gtop:'#e0b84a',gmid:'#8f6a1c',gfill:'#3a2a0c',pit:'#05050c',boss:'GOLD VOLT',th:9,bk:'mirror',gap:.7,sp:106,types:['hopper','tosser','goon','roller','drone','hopper','tosser'],tr:.944,df:.6,len:5600},
+  {name:'THE MIRROR HALL',card:['A HALL OF MIRRORS.','ONE REFLECTION IS NOT YOURS.'],sky:['#0e0a04','#2e2208','#6a4a12'],far:'#2a1e08',mid:'#34260a',near:'#3e2e0c',win:'#fff0a8',gtop:'#e0b84a',gmid:'#8f6a1c',gfill:'#3a2a0c',pit:'#05050c',boss:'SHADOW VOLT',th:9,bk:'mirror',gap:.7,sp:106,types:['hopper','tosser','goon','roller','drone','hopper','tosser'],tr:.944,df:.6,len:5600},
   {name:'STORM TOWER',card:['THE ROOF OF THE CITY.','HE IS WAITING AT THE TOP.','EVERY VILLAIN WAS A FRIEND.'],sky:['#04050d','#121c3a','#2a3f6e'],far:'#0e1430',mid:'#131b40',near:'#1a2656',win:'#35e0ff',gtop:'#7a8aac',gmid:'#3a4666',gfill:'#141a30',pit:'#05050c',boss:'THE GOLDEN BOY',th:2,bk:'gold',gap:.7,sp:104,types:['drone','tosser','hopper','goon','roller','drone','tosser','hopper'],tr:.891,df:.7,len:5800}
 ];
 /* ---------- side quests: three stars per stage (fuse, rescue all, the stage's own challenge) ---------- */
@@ -453,7 +452,7 @@ let safe={x:50,y:GY-40};
 const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 const isFoe=e=>e.k==='goon'||e.k==='drone'||e.k==='tosser'||e.k==='roller'||e.k==='hopper'||e.boss;
 const HOPP={l:'#ffb0a0',m:'#e0445a',d:'#a82c40',boot:'#3d0c14',eye:'#ffe14a'};
-const GVOLT={skin:'#ffd766',skinD:'#c98a1c',hair:'#fff0a8',hairD:'#e0b84a',strap:'#8f5d12',gog:'#ff3d5a',mouth:'#a06c12',coat:'#ffe9a0',coatD:'#c98a1c',suit:'#e0a526',em:'#ff3d5a',leg:'#c98a1c',legD:'#8f5d12',boot:'#5e3d0c',tails:true,hand:'#ffd766'};
+const GVOLT={skin:'#3e3260',skinD:'#251d3c',hair:'#5e4c8a',hairD:'#3e3260',strap:'#120e20',gog:'#c77dff',mouth:'#120e20',coat:'#1c1530',coatD:'#0e0a1a',suit:'#2a1f46',em:'#c77dff',leg:'#1c1530',legD:'#0e0a1a',boot:'#08060f',tails:true,hand:'#3e3260'};
 
 function mkE(k,x,y){
   const e={k,x,y,t:Math.floor(hash(x|0)*60),flash:0,face:-1,hp:1,pts:0,w:20,h:30,by:y,id:(x|0)},df=(STAGES[stage]&&STAGES[stage].df)||0;
@@ -980,8 +979,8 @@ function drawWorld(){
     if(c.k==='wave'){const f=(tick>>2&1);poly('#b8791a',[x-2,y+12,x+2,y+2-f*2,x+6,y+6,x+9,y-2+f*2,x+14,y+12]);poly('#ffc83d',[x,y+12,x+3,y+5,x+6,y+8,x+9,y+2+f,x+12,y+12]);poly('#fff0a8',[x+3,y+12,x+6,y+9,x+9,y+12])}
     else if(c.k==='crate'){g.fillStyle='#5e3d0c';g.fillRect(x,y,20,20);g.fillStyle='#b8791a';g.fillRect(x+1,y+1,18,18);g.fillStyle='#ffe9a0';g.fillRect(x+1,y+1,18,2);
       g.strokeStyle='#5e3d0c';g.lineWidth=2;g.beginPath();g.moveTo(x+3,y+4);g.lineTo(x+17,y+18);g.moveTo(x+17,y+4);g.lineTo(x+3,y+18);g.stroke()}
-    else if(c.k==='gbolt'){const z=(tick>>1&1)?2:-2;g.strokeStyle='rgba(255,61,90,.6)';g.lineWidth=4;g.beginPath();g.moveTo(x,y+2);g.lineTo(x+4,y+2+z);g.lineTo(x+8,y+2-z);g.lineTo(x+12,y+2);g.stroke();
-      g.strokeStyle='#ffc83d';g.lineWidth=2;g.stroke();g.strokeStyle='#fff';g.lineWidth=1;g.stroke()}
+    else if(c.k==='gbolt'){const z=(tick>>1&1)?2:-2;g.strokeStyle='rgba(120,60,200,.6)';g.lineWidth=4;g.beginPath();g.moveTo(x,y+2);g.lineTo(x+4,y+2+z);g.lineTo(x+8,y+2-z);g.lineTo(x+12,y+2);g.stroke();
+      g.strokeStyle='#c77dff';g.lineWidth=2;g.stroke();g.strokeStyle='#fff';g.lineWidth=1;g.stroke()}
     else{const gl=g.createRadialGradient(x+3.5,y+3.5,.5,x+3.5,y+3.5,8);gl.addColorStop(0,'rgba(255,225,74,.75)');gl.addColorStop(1,'rgba(255,200,61,0)');g.fillStyle=gl;g.fillRect(x-5,y-5,17,17);
       g.fillStyle='#ffc83d';g.beginPath();g.arc(x+3.5,y+3.5,3.4,0,7);g.fill();g.fillStyle='#fff6d0';g.beginPath();g.arc(x+3.5,y+3.5,1.8,0,7);g.fill();
       g.strokeStyle='#ffe14a';g.lineWidth=1;g.beginPath();for(let i=0;i<2;i++){const a=hash(tick+i*7+(c.x|0))*6.28;g.moveTo(x+3.5,y+3.5);g.lineTo(x+3.5+Math.cos(a)*4,y+3.5+Math.sin(a)*4);g.lineTo(x+3.5+Math.cos(a+.6)*7,y+3.5+Math.sin(a+.6)*7)}g.stroke()}}
@@ -1044,6 +1043,8 @@ function drawE(e){
       if(bossDie>0&&!(tick&2))break;
       if(e.dashT>0&&tick&2)break;
       if(e.ground)shadow(x+10,10);
+      if(!WH){const sg=g.createRadialGradient(x+10,e.y+26,4,x+10,e.y+26,40);sg.addColorStop(0,'rgba(199,125,255,.35)');sg.addColorStop(1,'rgba(199,125,255,0)');g.fillStyle=sg;g.fillRect(x-30,e.y-14,80,80);
+        if(tick%3===0)parts.push({x:e.x+4+Math.random()*12,y:e.y+40+Math.random()*8,vx:(Math.random()-.5)*.6,vy:-.5,life:22,col:Math.random()<.5?'#2a1f46':'#c77dff'})}
       (XP?(a,b,c,d,f,o)=>xpert(a,b,c,d,XPG,o):hero)(x,e.y,e.face,1.2,GVOLT,{run:e.ground&&Math.abs(e.mv)>.3,air:!e.ground,ph:tick*.36,fire:e.fireT>0});
       break}
     case'roller':{shadow(x+8,7);const a=e.x/8;
