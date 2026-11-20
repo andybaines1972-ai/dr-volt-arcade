@@ -165,7 +165,7 @@ function limb(px,py,ang,len,wid,c,c2,end){
 }
 const SKIN='#f2c29b',SKIND='#d59f78';
 const VOLT={skin:SKIN,skinD:SKIND,hair:'#aab0c4',hairD:'#80869c',strap:'#2a2f4a',gog:'#35e0ff',mouth:'#8a5a48',coat:'#f3f6ff',coatD:'#b9c2e0',suit:'#2a6cff',em:'#ffe14a',leg:'#2456d6',legD:'#18409f',boot:'#23263f',tails:true,hand:SKIN};
-const GOLDP={skin:SKIN,skinD:SKIND,hair:'#fff0a8',hairD:'#e0b84a',strap:'#14142a',gog:'#14142a',mouth:'#8a5a48',coat:'#ffc83d',coatD:'#c98a1c',suit:'#ffe9a0',em:'#ffffff',leg:'#e0a526',legD:'#b8791a',boot:'#7a4f10',cape:'#d3344f',hand:'#ffe9a0'};
+const GOLDP={skin:SKIN,skinD:SKIND,hair:'#ffe066',hairD:'#e0b84a',mouth:'#8a5a48',eye:'#14142a',coat:'#ffcf2e',coatD:'#d49a14',suit:'#ffe14a',em:'#d3344f',leg:'#ffcf2e',legD:'#d49a14',boot:'#f3f6ff',cape:'#d3344f',hand:'#f3f6ff'};
 const CHASE={skin:SKIN,skinD:SKIND,hair:'#e8c66a',hairD:'#c29a3c',mouth:'#8a5a48',coat:'#8d93ad',coatD:'#6a708c',suit:'#dfe3f2',leg:'#4a5070',legD:'#363b57',boot:'#23263f',hand:SKIN};
 const STAT={skin:'#ffc83d',skinD:'#c98a1c',hair:'#c98a1c',hairD:'#a06c12',mouth:'#a06c12',coat:'#ffd766',coatD:'#c98a1c',suit:'#ffc83d',leg:'#e0a526',legD:'#b8791a',boot:'#a06c12',hand:'#ffc83d',eye:'#a06c12'};
 const SHIRTS=[['#e0445a','#a82c40'],['#3fbf7f','#278a58'],['#7a4cff','#4c2bb8'],['#ff9a3d','#c96a1a'],['#35a6ff','#1f6fc0']];
@@ -246,10 +246,10 @@ function xpert(x,y,face,sc,pal,o){
 let XP=store.get('dv_xp','0')==='1',secretT=0,secretN=0,codeBuf='';
 const SEC=[84,88,69,82,78],secOK=s=>s.length===SEC.length&&SEC.every((c,i)=>(s.charCodeAt(i)^23)===c);
 const XPSAY=['ACTUALLY...','WRONG WAY!',"I'D DO IT DIFFERENTLY",'IN MY INDUSTRY...','LET ME EXPLAIN','HAVE YOU TRIED...?','TECHNICALLY...','I READ ABOUT THIS'];
-const XPCARD=[['11:42 PM.','THE GOLDEN BOY IS GILDING THE CITY.','HE IS DOING IT WRONG.'],['NEVER WORKED IN A FOUNDRY.','STILL KNOWS HOW TO RUN ONE.'],
-  ['THE BIRDS ARE GOLD.','HE HAS NOTES FOR THE BIRDS.'],['HAS NEVER DRIVEN A TRAIN.','HAS OPINIONS ON THE TIMETABLE.'],
-  ['THE BANKS.','HE WILL EXPLAIN INTEREST RATES TO THEM.'],['THE DOCKS.','HE KNOWS EVERY KNOT. ASK HIM.'],
-  ['NEVER MADE A COIN IN HIS LIFE.','STILL KNOWS HOW.'],['ACROSS THE ROOFTOPS.','THE WIND IS DOING IT WRONG.'],
+const XPCARD=[['11:42 PM.','THE GOLDEN BOY IS DRAINING THE CITY.','HE IS DOING IT WRONG.'],['NEVER WORKED IN A FOUNDRY.','STILL KNOWS HOW TO RUN ONE.'],
+  ['THE BIRDS ARE CRACKLING.','HE HAS NOTES FOR THE BIRDS.'],['HAS NEVER DRIVEN A TRAIN.','HAS OPINIONS ON THE TIMETABLE.'],
+  ['THE SUBSTATION.','HE WILL EXPLAIN VOLTAGE TO IT.'],['THE DOCKS.','HE KNOWS EVERY KNOT. ASK HIM.'],
+  ['NEVER RAN A POWER STATION.','STILL KNOWS HOW.'],['ACROSS THE ROOFTOPS.','THE WIND IS DOING IT WRONG.'],
   ['A HALL OF MIRRORS.','FINALLY, SOMEONE WORTH LISTENING TO.'],['THE ROOF OF THE CITY.','HE HAS A FEW POINTERS','FOR THE GOLDEN BOY.']];
 function setXP(v){XP=v;store.set('dv_xp',v?'1':'0');secretT=200;const h=document.querySelector('.marquee h1');if(h)h.textContent=v?'DR. X-PERT':'DR. VOLT';
   if(v)tel('secret');SFX.free();SFX.start();flashT=20;shake=8}
@@ -398,16 +398,16 @@ sfxBtn.addEventListener('click',toggleSfx);
 
 /* ---------- world ---------- */
 const STAGES=[
-  {name:'VOLT STREET',card:['11:42 PM.','THE GOLDEN BOY IS GILDING THE CITY.','ZAP THE STATUES TO FREE THE CITIZENS.'],sky:['#080b30','#2b1a66','#7a2f86'],far:'#1c1a55',mid:'#221b5c',near:'#2b2068',win:'#ffe14a',gtop:'#6a6fa0',gmid:'#3a3d6e',gfill:'#22244a',pit:'#05050c',boss:'BULLION BRUTE',th:0,bk:'brute',gap:.35,sp:160,types:['goon','goon','drone','goon','tosser'],tr:1,len:4200},
-  {name:'THE GOLD WORKS',card:['THE TRAIL LEADS TO THE OLD FOUNDRY.','MIND THE MOLTEN GOLD.'],sky:['#14081a','#4a1a1c','#a8481a'],far:'#2a1420',mid:'#351a1e',near:'#42201c',win:'#ff9a3d',gtop:'#9a7650',gmid:'#5a4030',gfill:'#2e1e1a',pit:'#ffb020',boss:'THE SEARCHLIGHT',th:1,bk:'search',gap:.7,sp:148,types:['goon','drone','tosser','drone','goon'],tr:1.122,len:4500},
-  {name:'GILT PARK',card:['THE PARK HAS GONE QUIET.','EVEN THE BIRDS ARE GOLD.'],sky:['#061a22','#0f3a3a','#2a6a52'],far:'#0f2a30',mid:'#123436',near:'#163e3a',win:'#c8ff8a',gtop:'#6fbf6a',gmid:'#2f6a48',gfill:'#173328',pit:'#04100c',boss:'THE MAGPIE',th:3,bk:'magpie',gap:.5,sp:142,types:['goon','drone','roller','goon','tosser'],tr:.944,len:4700},
-  {name:'THE GOLD LINE',card:['THE LAST TRAIN OUT IS SOLID GOLD.','WATCH FOR BROKEN TRACK.'],sky:['#0a0a2a','#3a1a5a','#c2567a'],far:'#1a1440',mid:'#241a4c',near:'#2e2058',win:'#ffb35c',gtop:'#a0a4b8',gmid:'#55586e',gfill:'#26283a',pit:'#05050c',boss:'COIN CANNON',th:4,bk:'tank',gap:.75,sp:134,types:['roller','goon','drone','tosser','roller'],tr:1.059,len:4900},
-  {name:'BULLION ROW',card:['THE BANKS. WHERE THE GOLD GOES HOME.','SOMETHING IS LOCKED IN WITH IT.'],sky:['#0c0618','#2a1244','#5a2a6a'],far:'#1a1030',mid:'#22163c',near:'#2c1c4a',win:'#ffe14a',gtop:'#c9c2d8',gmid:'#6a6480',gfill:'#2a2638',pit:'#05050c',boss:'THE VAULT',th:5,bk:'vault',gap:.6,sp:128,types:['tosser','goon','roller','drone','tosser','goon'],tr:.841,len:5100},
-  {name:'HARBOUR LIGHTS',card:['DOWN AT THE DOCKS THE CRANES ARE GOLD.','THE TIDE IS TURNING.'],sky:['#06101e','#14304a','#c2704a'],far:'#0e1c2c',mid:'#122436',near:'#162c40',win:'#ffd27a',gtop:'#8a7a66',gmid:'#4a4038',gfill:'#241e1c',pit:'#061826',boss:'WRECKING CRANE',th:6,bk:'crane',gap:.65,sp:122,types:['goon','hopper','drone','roller','goon','tosser'],tr:1,df:.15,len:5300},
-  {name:'THE MINT',card:['WHERE THE COINS ARE MADE.','KEEP YOUR HEAD DOWN.'],sky:['#120806','#3a1a10','#8a3a14'],far:'#24140e',mid:'#2e1a12',near:'#3a2014',win:'#ffb020',gtop:'#a08060',gmid:'#5a4434',gfill:'#2a1c16',pit:'#ffb020',boss:'THE GOLD PRESS',th:7,bk:'press',gap:.7,sp:116,types:['roller','goon','hopper','tosser','drone','roller'],tr:1.122,df:.3,len:5400},
-  {name:'THE SKYWAY',card:['ACROSS THE ROOFTOPS.','HOLD ON TO YOUR GOGGLES.','THE WIND IS UP.'],sky:['#0a1a40','#2a4a8a','#7aa0d0'],far:'#1a2a5a',mid:'#203466',near:'#283e72',win:'#ffe9a0',gtop:'#9a8a88',gmid:'#5a4a4e',gfill:'#2a2228',pit:'#03040c',boss:'GOLD ZEPPELIN',th:8,bk:'blimp',gap:.85,sp:112,types:['drone','hopper','goon','tosser','drone','roller'],tr:1.189,df:.45,wind:1,len:5500},
-  {name:'THE MIRROR HALL',card:['A HALL OF GOLD MIRRORS.','ONE REFLECTION IS NOT YOURS.'],sky:['#0e0a04','#2e2208','#6a4a12'],far:'#2a1e08',mid:'#34260a',near:'#3e2e0c',win:'#fff0a8',gtop:'#e0b84a',gmid:'#8f6a1c',gfill:'#3a2a0c',pit:'#05050c',boss:'GOLD VOLT',th:9,bk:'mirror',gap:.7,sp:106,types:['hopper','tosser','goon','roller','drone','hopper','tosser'],tr:.944,df:.6,len:5600},
-  {name:'MIDAS TOWER',card:['THE ROOF OF THE CITY.','HE IS WAITING AT THE TOP.','EVERY VILLAIN WAS A FRIEND.'],sky:['#04050d','#121c3a','#2a3f6e'],far:'#0e1430',mid:'#131b40',near:'#1a2656',win:'#35e0ff',gtop:'#7a8aac',gmid:'#3a4666',gfill:'#141a30',pit:'#05050c',boss:'THE GOLDEN BOY',th:2,bk:'gold',gap:.7,sp:104,types:['drone','tosser','hopper','goon','roller','drone','tosser','hopper'],tr:.891,df:.7,len:5800}
+  {name:'VOLT STREET',card:['11:42 PM.','THE GOLDEN BOY IS DRAINING THE CITY.','ZAP THE CHARGED CITIZENS FREE.'],sky:['#080b30','#2b1a66','#7a2f86'],far:'#1c1a55',mid:'#221b5c',near:'#2b2068',win:'#ffe14a',gtop:'#6a6fa0',gmid:'#3a3d6e',gfill:'#22244a',pit:'#05050c',boss:'BREAKER BRUTE',th:0,bk:'brute',gap:.35,sp:160,types:['goon','goon','drone','goon','tosser'],tr:1,len:4200},
+  {name:'THE FOUNDRY',card:['THE TRAIL LEADS TO THE OLD FOUNDRY.','MIND THE MOLTEN METAL.'],sky:['#14081a','#4a1a1c','#a8481a'],far:'#2a1420',mid:'#351a1e',near:'#42201c',win:'#ff9a3d',gtop:'#9a7650',gmid:'#5a4030',gfill:'#2e1e1a',pit:'#ffb020',boss:'THE SEARCHLIGHT',th:1,bk:'search',gap:.7,sp:148,types:['goon','drone','tosser','drone','goon'],tr:1.122,len:4500},
+  {name:'SPARK PARK',card:['THE PARK HAS GONE QUIET.','EVEN THE BIRDS ARE CRACKLING.'],sky:['#061a22','#0f3a3a','#2a6a52'],far:'#0f2a30',mid:'#123436',near:'#163e3a',win:'#c8ff8a',gtop:'#6fbf6a',gmid:'#2f6a48',gfill:'#173328',pit:'#04100c',boss:'THE MAGPIE',th:3,bk:'magpie',gap:.5,sp:142,types:['goon','drone','roller','goon','tosser'],tr:.944,len:4700},
+  {name:'THE LIVE RAIL',card:['THE LAST TRAIN OUT RUNS ON HIS POWER.','WATCH FOR BROKEN TRACK.'],sky:['#0a0a2a','#3a1a5a','#c2567a'],far:'#1a1440',mid:'#241a4c',near:'#2e2058',win:'#ffb35c',gtop:'#a0a4b8',gmid:'#55586e',gfill:'#26283a',pit:'#05050c',boss:'COIL CANNON',th:4,bk:'tank',gap:.75,sp:134,types:['roller','goon','drone','tosser','roller'],tr:1.059,len:4900},
+  {name:'THE SUBSTATION',card:["WHERE THE CITY'S POWER COMES HOME.",'SOMETHING IS LOCKED IN WITH IT.'],sky:['#0c0618','#2a1244','#5a2a6a'],far:'#1a1030',mid:'#22163c',near:'#2c1c4a',win:'#ffe14a',gtop:'#c9c2d8',gmid:'#6a6480',gfill:'#2a2638',pit:'#05050c',boss:'THE VAULT',th:5,bk:'vault',gap:.6,sp:128,types:['tosser','goon','roller','drone','tosser','goon'],tr:.841,len:5100},
+  {name:'HARBOUR LIGHTS',card:['DOWN AT THE DOCKS THE CRANES ARE LIVE.','THE TIDE IS TURNING.'],sky:['#06101e','#14304a','#c2704a'],far:'#0e1c2c',mid:'#122436',near:'#162c40',win:'#ffd27a',gtop:'#8a7a66',gmid:'#4a4038',gfill:'#241e1c',pit:'#061826',boss:'WRECKING CRANE',th:6,bk:'crane',gap:.65,sp:122,types:['goon','hopper','drone','roller','goon','tosser'],tr:1,df:.15,len:5300},
+  {name:'THE POWER STATION',card:["WHERE THE CITY'S POWER IS MADE.",'KEEP YOUR HEAD DOWN.'],sky:['#120806','#3a1a10','#8a3a14'],far:'#24140e',mid:'#2e1a12',near:'#3a2014',win:'#ffb020',gtop:'#a08060',gmid:'#5a4434',gfill:'#2a1c16',pit:'#ffb020',boss:'THE POWER PRESS',th:7,bk:'press',gap:.7,sp:116,types:['roller','goon','hopper','tosser','drone','roller'],tr:1.122,df:.3,len:5400},
+  {name:'THE SKYWAY',card:['ACROSS THE ROOFTOPS.','HOLD ON TO YOUR GOGGLES.','THE WIND IS UP.'],sky:['#0a1a40','#2a4a8a','#7aa0d0'],far:'#1a2a5a',mid:'#203466',near:'#283e72',win:'#ffe9a0',gtop:'#9a8a88',gmid:'#5a4a4e',gfill:'#2a2228',pit:'#03040c',boss:'STORM ZEPPELIN',th:8,bk:'blimp',gap:.85,sp:112,types:['drone','hopper','goon','tosser','drone','roller'],tr:1.189,df:.45,wind:1,len:5500},
+  {name:'THE MIRROR HALL',card:['A HALL OF GOLDEN MIRRORS.','ONE REFLECTION IS NOT YOURS.'],sky:['#0e0a04','#2e2208','#6a4a12'],far:'#2a1e08',mid:'#34260a',near:'#3e2e0c',win:'#fff0a8',gtop:'#e0b84a',gmid:'#8f6a1c',gfill:'#3a2a0c',pit:'#05050c',boss:'GOLD VOLT',th:9,bk:'mirror',gap:.7,sp:106,types:['hopper','tosser','goon','roller','drone','hopper','tosser'],tr:.944,df:.6,len:5600},
+  {name:'STORM TOWER',card:['THE ROOF OF THE CITY.','HE IS WAITING AT THE TOP.','EVERY VILLAIN WAS A FRIEND.'],sky:['#04050d','#121c3a','#2a3f6e'],far:'#0e1430',mid:'#131b40',near:'#1a2656',win:'#35e0ff',gtop:'#7a8aac',gmid:'#3a4666',gfill:'#141a30',pit:'#05050c',boss:'THE GOLDEN BOY',th:2,bk:'gold',gap:.7,sp:104,types:['drone','tosser','hopper','goon','roller','drone','tosser','hopper'],tr:.891,df:.7,len:5800}
 ];
 /* ---------- side quests: three stars per stage (fuse, rescue all, the stage's own challenge) ---------- */
 const QCH=['nohit','speed','nostorm','zap','nopow','nohit','speed','nofall','nostorm','nodie'];
@@ -982,7 +982,9 @@ function drawWorld(){
       g.strokeStyle='#5e3d0c';g.lineWidth=2;g.beginPath();g.moveTo(x+3,y+4);g.lineTo(x+17,y+18);g.moveTo(x+17,y+4);g.lineTo(x+3,y+18);g.stroke()}
     else if(c.k==='gbolt'){const z=(tick>>1&1)?2:-2;g.strokeStyle='rgba(255,61,90,.6)';g.lineWidth=4;g.beginPath();g.moveTo(x,y+2);g.lineTo(x+4,y+2+z);g.lineTo(x+8,y+2-z);g.lineTo(x+12,y+2);g.stroke();
       g.strokeStyle='#ffc83d';g.lineWidth=2;g.stroke();g.strokeStyle='#fff';g.lineWidth=1;g.stroke()}
-    else{g.fillStyle='#b8791a';g.beginPath();g.arc(x+3.5,y+3.5,3.6,0,7);g.fill();g.fillStyle='#ffc83d';g.beginPath();g.arc(x+3.2,y+3.2,2.8,0,7);g.fill();g.fillStyle='#fff0a8';g.fillRect(x+2+(tick>>2&1),y+1.5,1.2,3)}}
+    else{const gl=g.createRadialGradient(x+3.5,y+3.5,.5,x+3.5,y+3.5,8);gl.addColorStop(0,'rgba(255,225,74,.75)');gl.addColorStop(1,'rgba(255,200,61,0)');g.fillStyle=gl;g.fillRect(x-5,y-5,17,17);
+      g.fillStyle='#ffc83d';g.beginPath();g.arc(x+3.5,y+3.5,3.4,0,7);g.fill();g.fillStyle='#fff6d0';g.beginPath();g.arc(x+3.5,y+3.5,1.8,0,7);g.fill();
+      g.strokeStyle='#ffe14a';g.lineWidth=1;g.beginPath();for(let i=0;i<2;i++){const a=hash(tick+i*7+(c.x|0))*6.28;g.moveTo(x+3.5,y+3.5);g.lineTo(x+3.5+Math.cos(a)*4,y+3.5+Math.sin(a)*4);g.lineTo(x+3.5+Math.cos(a+.6)*7,y+3.5+Math.sin(a+.6)*7)}g.stroke()}}
   for(const q of parts){g.fillStyle=q.col;g.fillRect(Math.round(q.x-camX),Math.round(q.y),2,2)}
   if(windV&&state==='play'){g.fillStyle='rgba(230,240,255,'+Math.abs(windV*.7)+')';for(let i=0;i<34;i++){const x=((hash(i+1100)*W+tick*windV*14)%W+W)%W,y=hash(i+1200)*GY;g.fillRect(x|0,y|0,10+(i%3)*6,1)}}
   if(P.slow>0&&state==='play'){g.fillStyle='rgba(120,150,255,'+(P.slow<120&&tick&8?.04:.1)+')';g.fillRect(0,0,W,H)}
@@ -1045,8 +1047,9 @@ function drawE(e){
       (XP?(a,b,c,d,f,o)=>xpert(a,b,c,d,XPG,o):hero)(x,e.y,e.face,1.2,GVOLT,{run:e.ground&&Math.abs(e.mv)>.3,air:!e.ground,ph:tick*.36,fire:e.fireT>0});
       break}
     case'roller':{shadow(x+8,7);const a=e.x/8;
-      g.fillStyle=col('#b8791a');g.beginPath();g.arc(x+8,e.y+8,8,0,7);g.fill();g.fillStyle=col('#ffc83d');g.beginPath();g.arc(x+8,e.y+8,6.4,0,7);g.fill();
-      g.strokeStyle=col('#8f5d12');g.lineWidth=1.5;g.beginPath();g.moveTo(x+8-Math.cos(a)*5,e.y+8-Math.sin(a)*5);g.lineTo(x+8+Math.cos(a)*5,e.y+8+Math.sin(a)*5);g.moveTo(x+8+Math.sin(a)*5,e.y+8-Math.cos(a)*5);g.lineTo(x+8-Math.sin(a)*5,e.y+8+Math.cos(a)*5);g.stroke();
+      g.fillStyle=col('#5a3418');g.beginPath();g.arc(x+8,e.y+8,8,0,7);g.fill();g.strokeStyle=col('#d9823a');g.lineWidth=1;for(let r=2.4;r<8;r+=1.6){g.beginPath();g.arc(x+8,e.y+8,r,0,7);g.stroke()}
+      if(!WH&&tick&2){g.strokeStyle='rgba(255,225,74,.9)';g.beginPath();const b=hash(tick+e.id)*6.28;g.moveTo(x+8+Math.cos(b)*8,e.y+8+Math.sin(b)*8);g.lineTo(x+8+Math.cos(b+.4)*12,e.y+8+Math.sin(b+.4)*11);g.stroke()}
+      g.strokeStyle=col('#3a2210');g.lineWidth=1.5;g.beginPath();g.moveTo(x+8-Math.cos(a)*5,e.y+8-Math.sin(a)*5);g.lineTo(x+8+Math.cos(a)*5,e.y+8+Math.sin(a)*5);g.moveTo(x+8+Math.sin(a)*5,e.y+8-Math.cos(a)*5);g.lineTo(x+8-Math.sin(a)*5,e.y+8+Math.cos(a)*5);g.stroke();
       R(x+6.5,e.y+6.5,3,3,'#ff3d5a');break}
     case'magpie':{
       if(bossDie>0&&!(tick&2))break;
@@ -1094,7 +1097,8 @@ function drawE(e){
     case'cit':
       if(e.freed)hero(x,e.y,-1,.75,civ(e.id),{run:true,ph:tick*.4,cheer:true});
       else{shadow(x+6,6,e.gy+30);hero(x,e.y,(e.id&1)?1:-1,.75,STAT,{});
-        if((tick+e.id)%50<8){g.fillStyle='#fff';const sx=x+2+e.id%8,sy=e.y+4+(e.id%3)*7;g.fillRect(sx,sy-2,1,5);g.fillRect(sx-2,sy,5,1)}}
+        const ag=g.createRadialGradient(x+6,e.y+15,2,x+6,e.y+15,20);ag.addColorStop(0,'rgba(255,225,74,.28)');ag.addColorStop(1,'rgba(255,200,61,0)');g.fillStyle=ag;g.fillRect(x-14,e.y-5,40,40);
+        if((tick+e.id*3)%9<5){g.strokeStyle='rgba(255,240,170,.9)';g.lineWidth=1;g.beginPath();let px=x+hash(tick+e.id)*12,py=e.y+1;g.moveTo(px,py);for(let k=0;k<4;k++){px=x+hash(tick*3+k+e.id)*14-1;py+=7;g.lineTo(px,py)}g.stroke()}}
       break;
     case'fuse':case'cell':case'coil':case'bike':case'field':case'watch':case'seeker':case'battery':if(e.life&&e.life<120&&tick&4)break;pickup(e.k,x,e.by+Math.sin(tick/10)*2.5);break;
     case'brute':if(bossDie===0||tick&2){if(e.ground)shadow(x+19,18);goon(x,e.y,e.face,1.9,BRUTEP,e.ground&&e.rest===0?e.t:0,{spikes:true,still:!e.ground||e.rest>0})}break;
@@ -1207,7 +1211,7 @@ function drawTitle(){
   if(tick%60<40)otxt('PRESS START',W/2,104,C.ink,8,'center');
   otxt('HI '+pad6(hi),W/2,120,C.volt,8,'center');
   otxt(rank()+'  '+stars()+'/30',W/2,136,C.gold,8,'center');
-  otxt(XP?'HE KNOWS BEST. JUST ASK HIM.':'SAVE THE CITY BEFORE IT ALL TURNS TO GOLD',W/2,H-18,C.ink,8,'center');
+  otxt(XP?'HE KNOWS BEST. JUST ASK HIM.':'STOP HIM BEFORE HE DRAINS THE CITY DRY',W/2,H-18,C.ink,8,'center');
   if(secretT>0)drawSecret();
 }
 function drawCard(){
@@ -1231,7 +1235,7 @@ function drawEnding(){
   me(W/2-44,GY-64,1,1.6,{cheer:XP});hero(W/2+18,GY-64,-1,1.6,CHASE,{});
   const lines=XP?[['THE CITY IS SAVED.',C.ink],['HE WILL NOW TELL YOU HOW',C.ink],["HE'D HAVE DONE IT BETTER.",C.bolt],['CITIZENS ADVISED '+freedAll+'/'+citAll+'   SCORE '+pad6(score),C.volt],
       MODE.id==='corey'?['COREY MODE AS COREY. HE KNEW HE WOULD.',C.hot]:['HE SAYS COREY MODE IS EASY. PROVE IT.','#ff3d5a'],['SIDE QUESTS '+stars()+'/30 STARS - '+rank(),C.gold]]
-    :[['THE GOLD FADES. THE CITY WAKES.',C.ink],['UNDER THE GOLD THERE WAS ONLY CHASE.',C.ink],['EVERY VILLAIN WAS A FRIEND.',C.bolt],['CITIZENS FREED '+freedAll+'/'+citAll+'   SCORE '+pad6(score),C.volt],MODE.id==='corey'?['COREY MODE BEATEN. ABSOLUTE LEGEND.',C.hot]:['NOW TRY '+(MODE.id==='easy'?'NORMAL':'COREY')+' MODE...',MODE.id==='easy'?'#35e0ff':'#ff3d5a'],['SIDE QUESTS '+stars()+'/30 STARS - '+rank(),C.gold]];
+    :[['THE GOLDEN STORM FADES. THE CITY WAKES.',C.ink],['UNDER THE LIGHTNING THERE WAS ONLY CHASE.',C.ink],['EVERY VILLAIN WAS A FRIEND.',C.bolt],['CITIZENS FREED '+freedAll+'/'+citAll+'   SCORE '+pad6(score),C.volt],MODE.id==='corey'?['COREY MODE BEATEN. ABSOLUTE LEGEND.',C.hot]:['NOW TRY '+(MODE.id==='easy'?'NORMAL':'COREY')+' MODE...',MODE.id==='easy'?'#35e0ff':'#ff3d5a'],['SIDE QUESTS '+stars()+'/30 STARS - '+rank(),C.gold]];
   if(fuses()===10)lines.push(['ALL TEN FUSES FOUND. THE CITY LIGHTS COME ON.',C.volt]);
   lines.forEach((l,i)=>{if(endT>40+i*90)otxt(l[0],W/2,22+i*18,l[1],8,'center')});
   if(fuses()===10&&endT>40+6*90){g.fillStyle='rgba(255,225,74,'+(.5+.4*Math.sin(tick/9))+')';for(let i=0;i<40;i++)g.fillRect((hash(i+900)*W)|0,(140+hash(i+950)*(GY-150))|0,3,4)}
