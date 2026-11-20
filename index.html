@@ -95,6 +95,7 @@ canvas:focus-visible{outline:2px solid var(--volt);outline-offset:-2px}
         <button class="s" id="btn-start">START</button>
         <button class="s" id="btn-sound">MUSIC ON</button>
         <button class="s" id="btn-sfx">EFFECTS ON</button>
+        <button class="s" id="btn-paint" hidden>PAINTED</button>
       </div>
     </div>
     <details class="guide">
@@ -256,7 +257,83 @@ function drawSecret(){g.fillStyle='rgba(5,4,14,.7)';g.fillRect(0,96,W,62);
   txt(XP?'SECRET UNLOCKED':'SECRET OFF',W/2,106,tick&8?C.hot:C.bolt,8,'center');txt(XP?'DR. X-PERT':'DR. VOLT IS BACK',W/2,122,C.bolt,16,'center');
   txt('TYPE THE CODE AGAIN TO SWITCH BACK',W/2,144,C.dim,8,'center')}
 const bname=()=>XP&&STAGES[stage].bk==='mirror'?'SHADOW X-PERT':STAGES[stage].boss;
-function me(x,y,face,sc,o){if(XP)xpert(x,y,face,sc,XPP,o);else hero(x,y,face,sc,VOLT,o)}
+/* ---------- Painted Edition: painted sprites (art/*.webp) moved as puppets, painted backdrops, 3x sharper canvas ---------- */
+const ART={},ARTN={volt:1,xpert:1,golden:1,chase:1,shadowvolt:1,brute:1,goon:1,tosser:1,hopper:1,drone:-1,roller:1,vault:1,citizen:1,cannon:-1,crane:-1,press:1,zeppelin:-1,magpie:-1,searchlight:-1};
+const BGS=['bg_volt_street','bg_foundry','bg_spark_park','bg_live_rail','bg_substation','bg_harbour','bg_power_station','bg_skyway','bg_mirror_hall','bg_storm_tower','bg_title'];
+let PAINT=false,artOK=false,SC=1;
+(()=>{const ids=Object.keys(ARTN).concat(BGS);let left=ids.length,bad=0;
+  ids.forEach(id=>{const im=new Image();im.onload=()=>{ART[id]=im;done()};im.onerror=()=>{if(ARTN[id])bad++;done()};im.src='art/'+id+'.webp'});
+  function done(){if(--left)return;artOK=bad<3;const b=document.getElementById('btn-paint');if(b)b.hidden=!artOK;setPaint(artOK&&store.get('dv_paint','1')==='1',true)}})();
+function setPaint(v,quiet){PAINT=v&&artOK;SC=PAINT?3:1;cv.width=480*SC;cv.height=270*SC;cv.style.imageRendering=PAINT?'auto':'';
+  if(!quiet)store.set('dv_paint',PAINT?'1':'0');const b=document.getElementById('btn-paint');if(b)b.textContent=PAINT?'PAINTED':'CLASSIC'}
+/* draw a painted sprite standing on (cx,fy), h tall, as a puppet: bob, lean, leg swing, hover, hit flash */
+function paint(id,cx,fy,h,face,o){const im=ART[id];if(!im)return false;o=o||{};
+  const s=h/im.height,w=im.width*s,ph=o.ph!==undefined?o.ph:tick*.36;
+  g.save();g.translate(cx,fy);
+  let bob=0,lean=0,sy=1;
+  if(o.run){bob=-Math.abs(Math.sin(ph))*1.6;lean=.06}
+  if(o.air){sy=1.05;lean=.04}
+  if(o.hover)bob=Math.sin(tick/9+(o.seed||0))*1.6;
+  if(o.flap)sy=1+Math.sin(tick/4)*.08;
+  if(o.fire)g.translate(-face*1.2,0);
+  g.translate(0,bob);if(face!==(ARTN[id]||1))g.scale(-1,1);if(o.rot)g.rotate(o.rot);g.rotate(lean);g.scale(1,sy);
+  if(o.alpha!==undefined)g.globalAlpha=o.alpha;
+  if(o.run&&!o.noLegs){const hip=o.hip||.56,sw=Math.sin(ph)*.24;
+    g.drawImage(im,0,0,im.width,im.height*hip,-w/2,-h,w,h*hip+.6);
+    g.save();g.translate(0,-h*(1-hip));g.transform(1,0,sw,1,0,0);g.drawImage(im,0,im.height*hip,im.width,im.height*(1-hip),-w/2,0,w,h*(1-hip));g.restore()}
+  else g.drawImage(im,-w/2,-h,w,h);
+  if(WH){g.globalCompositeOperation='lighter';g.globalAlpha=.7;g.drawImage(im,-w/2,-h,w,h)}
+  g.restore();return true}
+function paintBG(id){const im=ART[id];if(!im)return false;const dh=252,dw=dh*im.width/im.height,span=Math.max(1,(L||W)-W);
+  const ox=-clamp(camX/span,0,1)*(dw-W);g.drawImage(im,ox,0,dw,dh);
+  const fg=g.createLinearGradient(0,150,0,GY);fg.addColorStop(0,'rgba(8,6,20,0)');fg.addColorStop(1,'rgba(8,6,20,.75)');g.fillStyle=fg;g.fillRect(0,150,W,GY-150);return true}
+function paintE(e,x){
+  if(e.boss&&bossDie>0&&!(tick&2))return true;
+  const k=e.k,ph=e.t*.3;
+  switch(k){
+    case'goon':shadow(x+10,9);return paint('goon',x+10,e.y+31,36,e.face,{run:true,ph});
+    case'tosser':shadow(x+10,9,e.y+e.h);return paint('tosser',x+10,e.y+31,36,e.face,{fire:e.t%e.per>50&&e.t%e.per<70});
+    case'hopper':{const air=e.y<e.gy;shadow(x+10,air?6:9,e.gy+30);return paint('hopper',x+10,e.y+31,34,e.face,{air,rot:air?-.15*e.face:0})}
+    case'drone':return paint('drone',x+13,e.y+22,26,-1,{hover:true,seed:e.id});
+    case'roller':shadow(x+8,7);return paint('roller',x+8,e.y+18,22,e.dir||-1,{rot:Math.sin(e.x/6)*.08});
+    case'cit':if(e.freed)return false;shadow(x+6,8,e.gy+30);
+      if(!WH&&(tick+e.id*3)%9<5){g.strokeStyle='rgba(255,240,170,.9)';g.lineWidth=1;g.beginPath();let px=x+hash(tick+e.id)*12,py=e.y-4;g.moveTo(px,py);for(let i=0;i<4;i++){px=x+hash(tick*3+i+e.id)*16-2;py+=9;g.lineTo(px,py)}g.stroke()}
+      return paint('citizen',x+6,e.y+35,40,(e.id&1)?1:-1,{alpha:.95});
+    case'brute':if(e.ground)shadow(x+19,18);return paint('brute',x+19,e.y+58,66,e.face,{run:e.ground&&e.rest===0,ph:e.t*.2,air:!e.ground});
+    case'search':return paint('searchlight',x+26,e.y+40,46,-1,{hover:true});
+    case'magpie':return paint('magpie',x+22,e.y+33,42,e.face||-1,{flap:true,rot:e.st==='dive'?.25*(e.face||-1):0});
+    case'tank':return paint('cannon',x+28,e.y+42,44,e.dir||-1,{rot:Math.sin(tick/3)*.01});
+    case'vault':{const ok=paint('vault',x+25,e.y+74,76,-1,{});
+      if(!e.shut&&!WH){g.fillStyle='rgba(255,225,74,'+(.25+.2*Math.sin(tick/5))+')';g.fillRect(x+12,e.y+18,26,34)}return ok}
+    case'press':{const stk=e.st==='stuck';if(!stk){g.fillStyle=e.st==='tele'&&tick&4?'rgba(255,61,139,.6)':'rgba(0,0,0,.3)';g.fillRect(x,GY-1,64,3)}
+      R(x+28,0,8,Math.max(0,e.y-20),'#2a2c40');return paint('press',x+32,e.y+44,72,1,{rot:e.st==='tele'&&tick&2?.02:0})}
+    case'blimp':return paint('zeppelin',x+20,e.y+26,100,-1,{hover:true});
+    case'mirror':{if(e.dashT>0&&tick&2)return true;if(e.ground)shadow(x+10,10);
+      if(!WH){const sg=g.createRadialGradient(x+10,e.y+26,4,x+10,e.y+26,40);sg.addColorStop(0,'rgba(199,125,255,.35)');sg.addColorStop(1,'rgba(199,125,255,0)');g.fillStyle=sg;g.fillRect(x-30,e.y-14,80,80)}
+      return paint(XP?'xpert':'shadowvolt',x+10,e.y+49,XP?52:58,e.face,{run:e.ground&&Math.abs(e.mv)>.3,air:!e.ground,fire:e.fireT>0,alpha:XP?.75:1,noLegs:XP})}
+    case'gold':{if(e.st==='prep'&&tick&2)return true;if(e.y+e.h>=GY-1)shadow(x+12,12);
+      if(!WH){const gg=g.createRadialGradient(x+12,e.y+28,4,x+12,e.y+28,44);gg.addColorStop(0,'rgba(255,225,74,.3)');gg.addColorStop(1,'rgba(255,225,74,0)');g.fillStyle=gg;g.fillRect(x-34,e.y-18,92,92)}
+      const air=e.st==='hover'||e.st==='rise'||e.st==='drop';return paint('golden',x+12,e.y+57,64,e.face,{air,hover:e.st==='hover',run:e.st==='dash',ph:tick*.6,fire:e.st==='hover'&&e.stT%48>10&&e.stT%48<26})}
+  }
+  return false}
+function paintGround(S){
+  /* painted-style ground: dark shaded slabs, a lit top face and a neon rim, to sit with the painted art */
+  const pg=g.createLinearGradient(0,GY,0,H);pg.addColorStop(0,S.pit);pg.addColorStop(1,'#020208');g.fillStyle=pg;g.fillRect(0,GY+2,W,H-GY);
+  for(const s of solids){const x=s.x-camX;if(x>W||x+s.w<0)continue;const a=Math.max(x,-2),b=Math.min(x+s.w,W+2),ww=b-a;
+    const gr=g.createLinearGradient(0,s.y,0,H);gr.addColorStop(0,S.gmid);gr.addColorStop(.12,S.gfill);gr.addColorStop(1,'#04040c');g.fillStyle=gr;g.fillRect(a,s.y,ww,H-s.y);
+    const tg=g.createLinearGradient(0,s.y,0,s.y+7);tg.addColorStop(0,S.gtop);tg.addColorStop(1,S.gmid);g.fillStyle=tg;g.fillRect(a,s.y,ww,7);
+    g.fillStyle='rgba(0,0,0,.35)';for(let xx=a-((a+camX)%46+46)%46;xx<b;xx+=46)if(xx>=a)g.fillRect(xx,s.y+7,1.2,H-s.y);
+    g.fillStyle='rgba(53,224,255,.85)';g.fillRect(a,s.y,ww,1);g.fillStyle='rgba(53,224,255,.18)';g.fillRect(a,s.y-2,ww,2);
+    if(x>=0){g.fillStyle='rgba(255,61,139,.75)';g.fillRect(x,s.y,1,H-s.y)}if(x+s.w<=W){g.fillStyle='rgba(255,61,139,.75)';g.fillRect(x+s.w-1,s.y,1,H-s.y)}}
+  for(const p of plats){const x=p.x-camX;if(x>W||x+p.w<0)continue;
+    g.fillStyle='rgba(0,0,0,.35)';g.fillRect(x+4,p.y+p.h,p.w-8,4);
+    const gr=g.createLinearGradient(0,p.y,0,p.y+p.h);gr.addColorStop(0,S.gtop);gr.addColorStop(.35,S.gmid);gr.addColorStop(1,'#08080f');
+    g.fillStyle=gr;g.beginPath();if(g.roundRect)g.roundRect(x,p.y,p.w,p.h,2);else g.rect(x,p.y,p.w,p.h);g.fill();
+    g.fillStyle='rgba(53,224,255,.9)';g.fillRect(x+1,p.y,p.w-2,1);g.fillStyle='rgba(255,61,139,.7)';g.fillRect(x+1,p.y+p.h-1,p.w-2,1)}
+}
+function grade(){/* light pass: vignette + cool shadows */
+  const v=g.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*.95);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(6,4,18,.55)');g.fillStyle=v;g.fillRect(0,0,W,H)}
+function me(x,y,face,sc,o){if(PAINT&&paint(XP?'xpert':'volt',x+8*sc,y+40*sc+(XP?2*sc:0),(XP?44:47)*sc,face,Object.assign({hip:XP?.7:.56,noLegs:XP},o||{})))return;if(XP)xpert(x,y,face,sc,XPP,o);else hero(x,y,face,sc,VOLT,o)}
 const GOONP={l:'#ffe9a0',m:'#ffc83d',d:'#b8791a',boot:'#5e3d0c',eye:'#ff3d5a'};
 const TOSSP={l:'#b79cff',m:'#7a4cff',d:'#4c2bb8',boot:'#24124f',eye:'#ffe14a'};
 const BRUTEP={l:'#ffe9a0',m:'#e0a526',d:'#8f5d12',boot:'#3d2808',eye:'#ff3d5a'};
@@ -394,6 +471,7 @@ if(XP){const h=document.querySelector('.marquee h1');if(h)h.textContent='DR. X-P
     box.addEventListener('submit',ev=>{ev.preventDefault();const v=inp.value.trim().toUpperCase();box.remove();if(secOK(v)){audio();if(state!=='title')toTitle();setXP(!XP)}});
     inp.addEventListener('keydown',ev=>{ev.stopPropagation();if(ev.key==='Escape')box.remove()})})}
 sfxBtn.addEventListener('click',toggleSfx);
+document.getElementById('btn-paint').addEventListener('click',()=>setPaint(!PAINT));
 
 /* ---------- world ---------- */
 const STAGES=[
@@ -858,6 +936,7 @@ function layer(c,gcol,par,bw,hmin,hmax,seed,win,roofs){
   }
 }
 function drawBG(S){
+  if(PAINT&&paintBG(state==='title'?'bg_title':BGS[stage]))return;
   const gr=g.createLinearGradient(0,0,0,GY);gr.addColorStop(0,S.sky[0]);gr.addColorStop(.6,S.sky[1]);gr.addColorStop(1,S.sky[2]);
   g.fillStyle=gr;g.fillRect(0,0,W,H);
   for(let i=0;i<70;i++){const x=((hash(i)*W*2-camX*.03)%W+W)%W,y=hash(i+99)*130;if((tick+i*7)%110<90){g.fillStyle=i%5?'#8f93c9':'#fff';g.fillRect(x|0,y|0,i%9?1:2,i%9?1:2)}}
@@ -951,6 +1030,7 @@ function drawWorld(){
   if(S.th===8){for(let i=0;i<40;i++){const x=((hash(i+950)*W*2-camX*.3)%W+W)%W;g.fillStyle=i%4?'#ffe14a':'#ff9a3d';g.fillRect(x|0,(GY+16+hash(i+960)*24)|0,1,1)}}
   if(S.th===1||S.th===7){g.fillStyle='#ffe14a';for(let x=0;x<W;x+=6)g.fillRect(x,GY+22+Math.round(Math.sin((x+camX)/9+tick/14)*2),6,2);g.fillStyle='#fff0a8';for(let x=3;x<W;x+=31)g.fillRect((x+tick/3)%W,GY+30,3,1);
     const pg=g.createLinearGradient(0,GY,0,GY+20);pg.addColorStop(0,'rgba(20,8,4,.85)');pg.addColorStop(1,'rgba(20,8,4,0)');g.fillStyle=pg;g.fillRect(0,GY,W,20)}
+  if(PAINT){paintGround(S)}else{
   decor();
   for(const s of solids){const x=Math.round(s.x-camX);if(x>W||x+s.w<0)continue;const a=Math.max(x,0),b=Math.min(x+s.w,W),ww=b-a;
     g.fillStyle=S.gfill;g.fillRect(a,s.y,ww,H-s.y);g.fillStyle=S.gmid;g.fillRect(a,s.y,ww,9);g.fillStyle=S.gtop;g.fillRect(a,s.y,ww,3);
@@ -965,6 +1045,7 @@ function drawWorld(){
     g.fillStyle=S.gmid;g.fillRect(x,p.y,p.w,p.h);g.fillStyle=S.gtop;g.fillRect(x,p.y,p.w,3);g.fillStyle='rgba(255,255,255,.35)';g.fillRect(x,p.y,p.w,1);
     g.fillStyle='rgba(0,0,0,.4)';g.fillRect(x,p.y+p.h-2,p.w,2);for(let xx=x+4;xx<x+p.w-3;xx+=10)g.fillRect(xx,p.y+4,2,2);
     g.fillStyle=S.gfill;g.fillRect(x+4,p.y+p.h,3,5);g.fillRect(x+p.w-7,p.y+p.h,3,5)}
+  }
   for(const e of ens)drawE(e);
   drawP();
   for(const b of bolts){const x=b.x-camX,y=b.y+2,z=(tick>>1&1)?2:-2;
@@ -998,6 +1079,7 @@ function drawWorld(){
 function drawE(e){
   const x=e.x-camX;if(x<-80||x>W+50)return;
   WH=e.flash>0;
+  if(PAINT&&paintE(e,x)){WH=false;return}
   switch(e.k){
     case'goon':shadow(x+10,9);goon(x,e.y,e.face,1,GOONP,e.t);break;
     case'tosser':shadow(x+10,9,e.y+e.h);goon(x,e.y,e.face,1,TOSSP,e.t,{still:true,raise:e.t%e.per>35&&e.t%e.per<62});break;
@@ -1206,7 +1288,7 @@ function drawTitle(){
   const TT=XP?'DR. X-PERT':'DR. VOLT';txt(TT,W/2+3,33,C.hot,XP?36:40,'center');txt(TT,W/2,30,C.bolt,XP?36:40,'center');
   otxt('& THE GOLDEN BOY',W/2,80,C.gold,8,'center');
   shadow(102,22);shadow(W-102,22);
-  me(82,GY-100,1,2.5,{fire:true});hero(W-82-40,GY-100,-1,2.5,GOLDP,{});
+  me(82,GY-100,1,2.5,{fire:true});if(!(PAINT&&paint('golden',W-82-20,GY+2,150,-1,{hover:true})))hero(W-82-40,GY-100,-1,2.5,GOLDP,{});
   const z=(tick>>2&1)?5:-5;g.strokeStyle='rgba(53,224,255,.6)';g.lineWidth=5;g.beginPath();g.moveTo(150,GY-64);
   for(let i=1;i<=9;i++)g.lineTo(150+i*17,GY-64+((i&1)?z:-z));g.stroke();g.strokeStyle=C.bolt;g.lineWidth=2.5;g.stroke();g.strokeStyle='#fff';g.lineWidth=1;g.stroke();
   if(tick%60<40)otxt('PRESS START',W/2,104,C.ink,8,'center');
@@ -1233,7 +1315,7 @@ function drawEnding(){
   const sv=camX;camX=3000;layer('#4a3470','#4a3470',.12,30,40,110,11,false,false);layer('#33255a','#33255a',.25,40,30,90,33,true,true);layer('#241a44','#241a44',.45,54,20,70,57,true,true);camX=sv;
   g.fillStyle='#141a30';g.fillRect(0,GY,W,H-GY);g.fillStyle='#3a4666';g.fillRect(0,GY,W,9);g.fillStyle='#7a8aac';g.fillRect(0,GY,W,3);
   shadow(W/2-30,14);shadow(W/2+30,14);
-  me(W/2-44,GY-64,1,1.6,{cheer:XP});hero(W/2+18,GY-64,-1,1.6,CHASE,{});
+  me(W/2-44,GY-64,1,1.6,{cheer:XP});if(!(PAINT&&paint('chase',W/2+31,GY,76,-1,{})))hero(W/2+18,GY-64,-1,1.6,CHASE,{});
   const lines=XP?[['THE CITY IS SAVED.',C.ink],['HE WILL NOW TELL YOU HOW',C.ink],["HE'D HAVE DONE IT BETTER.",C.bolt],['CITIZENS ADVISED '+freedAll+'/'+citAll+'   SCORE '+pad6(score),C.volt],
       MODE.id==='corey'?['COREY MODE AS COREY. HE KNEW HE WOULD.',C.hot]:['HE SAYS COREY MODE IS EASY. PROVE IT.','#ff3d5a'],['SIDE QUESTS '+stars()+'/30 STARS - '+rank(),C.gold]]
     :[['THE GOLDEN STORM FADES. THE CITY WAKES.',C.ink],['UNDER THE LIGHTNING THERE WAS ONLY CHASE.',C.ink],['EVERY VILLAIN WAS A FRIEND.',C.bolt],['CITIZENS FREED '+freedAll+'/'+citAll+'   SCORE '+pad6(score),C.volt],MODE.id==='corey'?['COREY MODE BEATEN. ABSOLUTE LEGEND.',C.hot]:['NOW TRY '+(MODE.id==='easy'?'NORMAL':'COREY')+' MODE...',MODE.id==='easy'?'#35e0ff':'#ff3d5a'],['SIDE QUESTS '+stars()+'/30 STARS - '+rank(),C.gold]];
@@ -1243,7 +1325,7 @@ function drawEnding(){
   if(endT>40+(lines.length-1)*90&&tick%60<40)otxt('THANK YOU FOR PLAYING - PRESS START',W/2,H-16,C.ink,8,'center');
 }
 function render(){
-  g.save();
+  g.setTransform(SC,0,0,SC,0,0);g.save();
   if(shake>0&&!reduce)g.translate((Math.random()*4-2)|0,(Math.random()*4-2)|0);
   if(state==='card')drawCard();
   else if(state==='select')drawSelect();
@@ -1252,6 +1334,7 @@ function render(){
     drawWorld();
     if(state==='title')drawTitle();
     else{
+      if(PAINT)grade();
       drawHUD();
       if(state==='clear'){shade(.62);txt(XP?'TOLD YOU SO.':'STAGE CLEAR',W/2,52,C.bolt,24,'center');
         if(clearT>30)txt('CITIZENS FREED  '+citFreed+'/'+citN,W/2,90,C.ink,8,'center');
