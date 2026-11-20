@@ -27,7 +27,7 @@ body{
 .marquee p{margin:0;font-family:var(--font-arcade);font-size:clamp(8px,1.3vw,12px);letter-spacing:.12em;color:var(--gold)}
 .bezel{background:#07060d;padding:clamp(6px,1.4vw,16px)}
 .screen{position:relative;border-radius:10px;overflow:hidden;background:var(--screen)}
-canvas{display:block;width:100%;max-width:100%;aspect-ratio:16/9;image-rendering:pixelated;image-rendering:crisp-edges;background:var(--screen);outline:none;touch-action:none}
+canvas{position:relative;display:block;width:100%;max-width:100%;aspect-ratio:16/9;image-rendering:pixelated;image-rendering:crisp-edges;background:var(--screen);outline:none;touch-action:none}
 canvas:focus-visible{outline:2px solid var(--volt);outline-offset:-2px}
 .scan{position:absolute;inset:0;pointer-events:none;background:
   repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0 3px,rgba(0,0,0,.13) 3px 4px),
@@ -65,6 +65,7 @@ canvas:focus-visible{outline:2px solid var(--volt);outline-offset:-2px}
   </header>
   <div class="bezel">
     <div class="screen">
+      <video id="cutvid" muted playsinline preload="none" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000"></video>
       <canvas id="game" width="480" height="270" tabindex="0" aria-label="Dr. Volt and the Golden Boy arcade game"></canvas>
       <div class="scan"></div>
     </div>
@@ -96,6 +97,7 @@ canvas:focus-visible{outline:2px solid var(--volt);outline-offset:-2px}
         <button class="s" id="btn-sound">MUSIC ON</button>
         <button class="s" id="btn-sfx">EFFECTS ON</button>
         <button class="s" id="btn-paint" hidden>PAINTED</button>
+        <button class="s" id="btn-cuts" hidden>CUTSCENES ON</button>
       </div>
     </div>
     <details class="guide">
@@ -263,7 +265,15 @@ const BGS=['bg_volt_street','bg_foundry','bg_spark_park','bg_live_rail','bg_subs
 let PAINT=false,artOK=false,SC=1,eraSel=1;
 setTimeout(()=>{const ids=Object.keys(ARTN).concat(BGS,FRAMES);let left=ids.length,bad=0;
   ids.forEach(id=>{const im=new Image();im.onload=()=>{ART[id]=im;done()};im.onerror=()=>{if(ARTN[id]&&!id.startsWith('civ'))bad++;done()};im.src='art/'+id+'.webp'});
-  function done(){if(--left)return;artOK=bad<3;const b=document.getElementById('btn-paint');if(b)b.hidden=!artOK;setPaint(artOK&&store.get('dv_paint','1')==='1',true)}},0);
+  function done(){if(--left)return;artOK=bad<3;const b=document.getElementById('btn-paint');if(b)b.hidden=!artOK;const bc=document.getElementById('btn-cuts');if(bc)bc.hidden=!artOK;setPaint(artOK&&store.get('dv_paint','1')==='1',true)}},0);
+/* cutscenes (Modern only, Vercel only): a silent video under the canvas; the theme keeps playing; any button skips */
+let cutId=0,cutCB=null,cutsOn=store.get('dv_cuts','1')==='1',cardVid=false;
+const vid=document.getElementById('cutvid');
+function playCut(name,cb){if(!PAINT||!cutsOn||!vid){if(cb)cb();return false}
+  const id=++cutId;cutCB=cb||null;vid.src='cuts/'+name+'.mp4';vid.style.display='block';cv.style.background='transparent';
+  try{const pr=vid.play();if(pr&&pr.catch)pr.catch(err=>{if(id===cutId&&err&&err.name!=='AbortError')endCut()})}catch(e){endCut()}return true}
+function endCut(){if(!vid)return;cutId++;vid.pause();vid.style.display='none';vid.removeAttribute('src');try{vid.load()}catch(e){}cv.style.background='';cardVid=false;const c=cutCB;cutCB=null;if(c)c()}
+if(vid){vid.addEventListener('ended',()=>endCut());vid.addEventListener('error',()=>{if(vid.style.display==='block'&&vid.getAttribute('src'))endCut()})}
 function setPaint(v,quiet){PAINT=v&&artOK;SC=PAINT?3:1;cv.width=480*SC;cv.height=270*SC;cv.style.imageRendering=PAINT?'auto':'';
   if(!quiet)store.set('dv_paint',PAINT?'1':'0');const b=document.getElementById('btn-paint');if(b)b.textContent=PAINT?'STYLE: MODERN':'STYLE: RETRO'}
 /* draw a painted sprite standing on (cx,fy), h tall, as a puppet: bob, lean, leg swing, hover, hit flash */
@@ -506,6 +516,7 @@ if(XP){const h=document.querySelector('.marquee h1');if(h)h.textContent='DR. X-P
     inp.addEventListener('keydown',ev=>{ev.stopPropagation();if(ev.key==='Escape')box.remove()})})}
 sfxBtn.addEventListener('click',toggleSfx);
 document.getElementById('btn-paint').addEventListener('click',()=>setPaint(!PAINT));
+{const cb=document.getElementById('btn-cuts');cb.textContent=cutsOn?'CUTSCENES ON':'CUTSCENES OFF';cb.addEventListener('click',()=>{cutsOn=!cutsOn;store.set('dv_cuts',cutsOn?'1':'0');cb.textContent=cutsOn?'CUTSCENES ON':'CUTSCENES OFF';if(!cutsOn&&cutCB!==null)endCut()})}
 
 /* ---------- world ---------- */
 const STAGES=[
@@ -615,12 +626,14 @@ function build(si){
   citFreed=0;citAll+=citN;
 }
 function setMode(m){MODE=m;sel=MODES.indexOf(m);hi=HI[m.id];store.set('dv_mode',m.id)}
-function newGame(){score=0;lives=MODE.lives;nextLife=MODE.life1;stage=0;citAll=0;freedAll=0;P.storm=0;startStage();RUN=rid();tel('start')}
+function newGame(){score=0;lives=MODE.lives;nextLife=MODE.life1;stage=0;citAll=0;freedAll=0;P.storm=0;startStage();RUN=rid();tel('start');
+  if(PAINT&&cutsOn){state='cut';playCut('intro',()=>{state='card';cardT=0;startCardVid()})}}
 function startStage(){
   build(stage);Q={fuse:0,fail:0,kills:0,t:0,res:0,fresh:0};boss=null;bossOn=false;bossDie=0;warnT=0;camX=0;shake=0;flashT=0;foeAcc=0;dropT=0;dropN=0;
   Object.assign(P,{x:50,y:GY-40,vx:0,vy:0,face:1,ground:true,hp:MODE.hp,inv:0,cool:0,power:0,bike:0,field:0,slow:0,seek:0,dead:0});
-  safe={x:50,y:GY-40};state='card';cardT=0;
+  safe={x:50,y:GY-40};state='card';cardT=0;startCardVid();
 }
+function startCardVid(){if(state!=='card')return;cardVid=playCut('level_'+(stage+1),()=>{if(state==='card')state='play'})}
 function add(n){score+=n*MODE.mult;if(score>hi){hi=score}if(score>=nextLife){lives++;nextLife+=MODE.lifeStep;SFX.get();pop(P.x,P.y-12,'1UP',C.volt)}}
 function burst(x,y,c,n){for(let i=0;i<n;i++)parts.push({x,y,vx:(Math.random()-.5)*5,vy:(Math.random()-.8)*5,life:18+Math.random()*18,col:c})}
 function pop(x,y,s,c){pops.push({x,y,s,col:c||C.ink,life:55})}
@@ -862,7 +875,8 @@ function update(){
     if(sel!==was)beep(520+sel*120,.06,'square',.04);
     if(go){setMode(MODES[sel]);audio();SFX.start();newGame()}
     return}
-  if(state==='card'){cardT++;if(cardT>200||(cardT>30&&(JP.start||JP.jump||JP.fire)))state='play';return}
+  if(state==='cut'){if(JP.start||JP.jump||JP.fire)endCut();return}
+  if(state==='card'){cardT++;if(cardVid){if(cardT>30&&(JP.start||JP.jump||JP.fire))endCut();return}if(cardT>200||(cardT>30&&(JP.start||JP.jump||JP.fire)))state='play';return}
   if(state==='over'){overT--;
     if(MODE.id==='corey'){if(overT<420&&(JP.start||JP.jump||JP.fire)){saveHi();newGame()}else if(overT<=0)toTitle();return}
     if(JP.start||JP.jump||JP.fire){if(!MODE.keepScore)score=0;lives=MODE.lives;if(!MODE.keepScore||nextLife<score)nextLife=score+MODE.life1;citAll-=citN;freedAll-=citFreed;startStage()}else if(overT<=0)toTitle();return}
@@ -944,7 +958,7 @@ function update(){
     else if(bossDie%7===0){burst(boss.x+Math.random()*boss.w,boss.y+Math.random()*boss.h,bossDie%2?C.gold:C.hot,12);SFX.boom();shake=4}
     if(bossDie===0){
       bonus=P.hp*1000;add(bonus);qFinish();saveHi();tel('clear',{stars:Q.res});if(boss.k==='gold')tel('complete',{stars:Q.res});
-      if(boss.k==='gold'){state='ending';endT=0}else{boss.dead=true;ens=ens.filter(e=>!e.dead);state='clear';clearT=0;SFX.start()}
+      if(boss.k==='gold'){if(PAINT&&cutsOn){state='cut';playCut(XP?'ending_xp':'ending',()=>{state='ending';endT=0})}else{state='ending';endT=0}}else{boss.dead=true;ens=ens.filter(e=>!e.dead);state='clear';clearT=0;SFX.start()}
     }
   }
 }
@@ -1350,7 +1364,7 @@ function drawTitle(){
   if(secretT>0)drawSecret();
 }
 function drawCard(){
-  const S=STAGES[stage];g.fillStyle='#05040e';g.fillRect(0,0,W,H);
+  const S=STAGES[stage];if(cardVid){g.clearRect(0,0,W,H);const vg=g.createLinearGradient(0,0,0,H);vg.addColorStop(0,'rgba(5,4,14,.55)');vg.addColorStop(.5,'rgba(5,4,14,.25)');vg.addColorStop(1,'rgba(5,4,14,.7)');g.fillStyle=vg;g.fillRect(0,0,W,H)}else{g.fillStyle='#05040e';g.fillRect(0,0,W,H)}
   txt(MODE.name+' MODE',W/2,32,MODE.col,8,'center');txt('STAGE '+(stage+1),W/2,50,C.dim,8,'center');txt(S.name,W/2+2,72,C.hot,24,'center');txt(S.name,W/2,70,C.bolt,24,'center');
   const CL=XP?XPCARD[stage]:S.card;CL.forEach((l,i)=>{if(cardT>30+i*30)txt(l,W/2,112+i*16,i===CL.length-1?C.gold:C.ink,8,'center')});
   if(cardT>20){const qt=qText(stage),b=QLOG[stage];
@@ -1379,7 +1393,8 @@ function drawEnding(){
 function render(){
   g.setTransform(SC,0,0,SC,0,0);g.save();
   if(shake>0&&!reduce)g.translate((Math.random()*4-2)|0,(Math.random()*4-2)|0);
-  if(state==='card')drawCard();
+  if(state==='cut'){g.clearRect(0,0,W,H)}
+  else if(state==='card')drawCard();
   else if(state==='select')drawSelect();
   else if(state==='era')drawEra();
   else if(state==='ending')drawEnding();
